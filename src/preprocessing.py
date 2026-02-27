@@ -5,20 +5,22 @@ from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 
-def get_preprocessing_pipeline(numeric_features, categorical_features):
+def get_preprocessing_pipeline(numeric_features: list, categorical_features: list) -> ColumnTransformer:
     """
-    Creates a scikit-learn preprocessing pipeline using ColumnTransformer.
+    Constructs a sophisticated Scikit-learn preprocessing pipeline.
     
     Args:
-        numeric_features (list): List of numerical column names.
-        categorical_features (list): List of categorical column names.
+        numeric_features (list): Numerical columns.
+        categorical_features (list): Categorical columns.
         
     Returns:
-        ColumnTransformer: Integrated preprocessing pipeline.
+        ColumnTransformer: Preprocessing object.
     """
-    
+    if not numeric_features or not categorical_features:
+        raise ValueError("Feature lists cannot be empty.")
+        
     numeric_transformer = Pipeline(steps=[
-        ('imputer', SimpleImputer(strategy='mean')),
+        ('imputer', SimpleImputer(strategy='median')),
         ('scaler', StandardScaler())
     ])
     
@@ -36,10 +38,13 @@ def get_preprocessing_pipeline(numeric_features, categorical_features):
     
     return preprocessor
 
-def prepare_data(df, target_col='Yield'):
+def prepare_data(df: pd.DataFrame, target_col: str = 'Yield'):
     """
-    Splits data into features and target, and performs train-test split.
+    Standard data preparation: X/y split and Train-Test partition.
     """
+    if target_col not in df.columns:
+        raise KeyError(f"Target column '{target_col}' not found in dataset.")
+        
     X = df.drop(columns=[target_col])
     y = df[target_col]
     

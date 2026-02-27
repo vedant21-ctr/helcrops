@@ -1,52 +1,61 @@
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.pipeline import Pipeline
+import pandas as pd
 
-def train_models(preprocessor, X_train, y_train):
+def train_models(preprocessor, X_train: pd.DataFrame, y_train: pd.Series):
     """
-    Trains multiple ML models and returns a dictionary of trained pipelines.
+    Trains a suite of regression models for academic comparison.
+    
+    Args:
+        preprocessor: The fitted or unfitted ColumnTransformer.
+        X_train: Feature set.
+        y_train: Target set.
     """
     
     models = {
         'Linear Regression': LinearRegression(),
-        'Decision Tree': DecisionTreeRegressor(random_state=42)
+        'Decision Tree': DecisionTreeRegressor(random_state=42, max_depth=10)
     }
     
     trained_pipelines = {}
     
     for name, model in models.items():
-        pipeline = Pipeline(steps=[
-            ('preprocessor', preprocessor),
-            ('regressor', model)
-        ])
-        
-        # Fit the model
-        pipeline.fit(X_train, y_train)
-        trained_pipelines[name] = pipeline
+        try:
+            pipeline = Pipeline(steps=[
+                ('preprocessor', preprocessor),
+                ('regressor', model)
+            ])
+            pipeline.fit(X_train, y_train)
+            trained_pipelines[name] = pipeline
+        except Exception as e:
+            print(f"Error training {name}: {e}")
         
     return trained_pipelines
 
-def get_feature_importance(pipeline, numeric_features, categorical_features):
+def get_feature_importance(pipeline, numeric_features: list, categorical_features: list):
     """
-    Extracts feature importance for models that support it (e.g., Decision Tree).
+    Safely extracts and formats feature importance for interpreting model decisions.
     """
     try:
         model = pipeline.named_steps['regressor']
-        if hasattr(model, 'feature_importances_'):
-            # Handling transformed feature names
-            ohe = pipeline.named_steps['preprocessor'].named_transformers_['cat'].named_steps['onehot']
-            cat_features_transformed = ohe.get_feature_names_out(categorical_features).tolist()
+        if not hasattr(model, 'feature_importances_'):
+            return None
             
-            # Combine all feature names
-            all_features = numeric_features + cat_features_transformed
+        # Get names from OneHotEncoder in the pipeline
+        ohe = pipeline.named_steps['preprocessor'].named_transformers_['cat'].named_steps['onehot']
+        cat_features_transformed = ohe.get_feature_names_out(categorical_features).tolist()
+        
+        all_features = numeric_features + cat_features_transformed
+        importances = model.feature_importances_
+        
+        importance_df = pd.DataFrame({
+            'Feature': all_features,
+            'Importance': importances
+        }).sort_values(by='Importance', ascending=False)
+        
+        return importance_df
             
-            # Create feature importance map
-            importances = model.feature_importances_
-            importance_map = dict(zip(all_features, importances))
-            
-            return sorted(importance_map.items(), key=lambda x: x[1], reverse=True)
-            
-    except (AttributeError, KeyError):
+    except (AttributeError, KeyError, ValueError) as e:
+        print(f"Feature importance extraction failed: {e}")
         return None
-    
-    return None
