@@ -26,17 +26,18 @@ This project involves the design and implementation of a **Crop-driven agricultu
 
 ---
 
-### Technology Stack
-| Component | Technology |
+### 🛠️ Technical Stack
+| Layer | Technology |
 | :--- | :--- |
-| **ML Models (M1)** | Linear Regression, Decision Trees, Scikit-Learn |
-| **Agent Framework (M2)** | LangGraph, Chroma/FAISS (RAG) |
-| **UI Framework** | Streamlit or Gradio |
-| **LLMs (M2)** | Open-source models or Free-tier APIs |
+| **Prediction Engine** | Scikit-Learn (Linear Regressor, Decision Tree CART) |
+| **Statistical Analysis** | Pandas, NumPy, SciPy |
+| **Deep Visualizations** | Seaborn, Matplotlib (High-DPI Rendering) |
+| **Intelligence Layer** | LangGraph (Planned), ChromaDB (Vector Indexing) |
+| **Interface** | Streamlit Elite (Custom CSS3/HTML5 Animations) |
 
 ---
 
-### Milestones & Deliverables
+### 📅 Milestones & Deliverables
 
 #### Milestone 1: ML-Based Yield Prediction (Mid-Sem)
 **Objective:** Identify yield potential using historical farm data focus on classical ML pipelines *without LLMs*.
@@ -63,8 +64,14 @@ This project involves the design and implementation of a **Crop-driven agricultu
 
 | Phase | Weight | Criteria |
 | :--- | :--- | :--- |
-| **Mid-Sem** | 25% | ML technique application, Feature Engineering, UI Usability, Evaluation Metrics. |
-| **End-Sem** | 30% | Reasoning quality, RAG & State management implementation, Output clarity, Deployment success. |
+| **Mid-Sem** | Critical | Interface Usability, Feature Engineering, Regression Accuracy, Code Integrity. |
+| **End-Sem** | Future | Agent Reasoning, Vector Store Performance, Deployment Uptime, UX Cohesion. |
+
+---
+
+> [!IMPORTANT]
+> **Created by Whole Team | Mid-Sem Project Submission**  
+> *Academic Year 2024-25 | Advanced Machine Learning in Agriculture*
 
 > [!WARNING]
 > Localhost-only demonstrations will **not** be accepted for final submission. Project must be hosted.
