@@ -3,6 +3,6 @@ numpy
 scikit-learn
 matplotlib
 seaborn
-streamlit
+streamlit>=1.30.0
 scipy
-altair
+altair<5
