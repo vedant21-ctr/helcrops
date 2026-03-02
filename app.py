@@ -4,104 +4,104 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
-from src.utils import generate_sample_data, get_yield_category, get_actionable_insights
+from src.utils import generate_sample_data, get_yield_category, generate_parameter_alerts
 from src.preprocessing import get_preprocessing_pipeline, prepare_data
 from src.model_training import train_models, get_feature_importance
 from src.evaluation import compare_models
 
 # --- CONFIGURATION & STYLING ---
 st.set_page_config(
-    page_title="HaveCrops | Agri-Analytics Platform",
-    page_icon="🌿",
+    page_title="HaveCrops | Statistical Yield Platform",
+    page_icon="🚜",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Premium Modern Agri-Theme
+# Bespoke Technical Theme
 st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Space+Grotesk:wght@300;500;700&display=swap');
 
         /* Global Styling */
-        * { font-family: 'Outfit', sans-serif; }
-        .main { background: linear-gradient(135deg, #f8faf8 0%, #edf2ed 100%); }
+        * { font-family: 'Space Grotesk', sans-serif; }
+        code, .stMarkdown code { font-family: 'IBM Plex Mono', monospace !important; }
+        .main { background-color: #f4f4f4; }
         
-        /* Glassmorphism Header */
+        /* Industrial Header */
         .header-container { 
-            background: linear-gradient(135deg, #064e3b 0%, #059669 100%);
-            padding: 4rem 2rem;
-            border-radius: 0 0 3rem 3rem;
-            color: white;
-            text-align: center;
-            margin-bottom: 3rem;
-            box-shadow: 0 20px 40px rgba(5, 150, 105, 0.15);
-            position: relative;
-            overflow: hidden;
+            background-color: #1a1c1e;
+            padding: 3.5rem 2rem;
+            border-bottom: 6px solid #d35400;
+            color: #ffffff;
+            text-align: left;
+            margin-bottom: 2.5rem;
         }
-        .header-container::before {
-            content: "";
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: rotate 20s linear infinite;
+        
+        .header-title { 
+            font-size: 3.2rem; 
+            font-weight: 700; 
+            margin: 0; 
+            letter-spacing: -2px;
+            color: #ffffff;
         }
-        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .header-subtitle { 
+            font-size: 1.1rem; 
+            opacity: 0.8; 
+            font-weight: 400; 
+            margin-top: 5px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
         
-        .header-title { font-size: 4rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -1px; }
-        .header-subtitle { font-size: 1.4rem; opacity: 0.9; font-weight: 300; }
-        
-        /* Premium Cards */
+        /* Technical Cards */
         .stat-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 1.5rem;
-            border-bottom: 4px solid #10b981;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease;
+            background: #ffffff;
+            padding: 1.5rem;
+            border: 1px solid #d1d1d1;
+            border-radius: 2px;
+            box-shadow: 4px 4px 0px 0px #1a1c1e;
         }
-        .stat-card:hover { transform: translateY(-5px); }
         
         /* Tab Styling */
-        .stTabs [data-baseweb="tab-list"] { gap: 2.5rem; background-color: transparent; }
+        .stTabs [data-baseweb="tab-list"] { 
+            gap: 1rem; 
+            padding: 10px 0;
+            border-bottom: 2px solid #d1d1d1; 
+        }
         .stTabs [data-baseweb="tab"] {
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #64748b;
-            padding: 10px 20px;
-            border-radius: 10px;
-            transition: all 0.3s ease;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #1a1c1e;
+            background-color: #e0e0e0;
+            padding: 8px 25px;
+            border-radius: 0px;
+            margin-right: 5px;
         }
         .stTabs [aria-selected="true"] { 
-            color: #059669 !important; 
-            background-color: #ecfdf5;
-            border-bottom-color: #059669 !important; 
+            color: #ffffff !important; 
+            background-color: #1a1c1e !important;
+            border-bottom: none !important;
         }
         
-        /* Prediction Result Box (Glassmorphic) */
+        /* Prediction Result Box (Solid Industrial) */
         .predict-box {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(12px);
-            padding: 3rem;
-            border-radius: 2rem;
-            border: 1px solid rgba(16, 185, 129, 0.2);
+            background: #ffffff;
+            padding: 2.5rem;
+            border: 2px solid #1a1c1e;
+            border-radius: 4px;
             text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(16, 185, 129, 0.15);
-            animation: fadeIn 0.8s ease-out;
+            box-shadow: 10px 10px 0px 0px #d35400;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
         /* Footer */
         .footer {
-            text-align: center;
-            padding: 3rem;
-            color: #64748b;
-            font-size: 1rem;
-            margin-top: 5rem;
-            border-top: 1px solid #e2e8f0;
-            letter-spacing: 0.5px;
+            text-align: left;
+            padding: 2rem;
+            color: #1a1c1e;
+            font-size: 0.85rem;
+            margin-top: 4rem;
+            border-top: 2px solid #1a1c1e;
+            background: #e0e0e0;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -132,22 +132,22 @@ trained_models, X_test, y_test = get_trained_models(df, numeric_features, catego
 # --- PAGE HEADER ---
 st.markdown("""
     <div class="header-container">
-        <div class="header-title">🌿 HaveCrops Analytics</div>
-        <div class="header-subtitle">Advanced Crop Yield Analytics & Decision Support System</div>
+        <div class="header-title">🚜 HaveCrops Analytics</div>
+        <div class="header-subtitle">Empirical Yield Modeling & Agronomic Data System</div>
     </div>
 """, unsafe_allow_html=True)
 
 # --- NAVIGATION TABS ---
 tab_home, tab_predict, tab_analytics, tab_perf, tab_about = st.tabs([
-    "🏠 Home", "🎯 Prediction", "📊 Data Insights", "📈 Model Performance", "ℹ️ About"
+    "📁 Data Summary", "🧮 Yield Modeler", "📉 Data Visuals", "📋 Model Evaluation", "ℹ️ System Info"
 ])
 
 # --- TAB 1: HOME ---
 with tab_home:
     col1, col2 = st.columns([1, 1], gap="large")
 # --- SIDEBAR INPUTS (REACTIVE) ---
-st.sidebar.header("🚜 Field Conditions")
-st.sidebar.markdown("Adjust these values to see real-time updates across all analytics.")
+st.sidebar.header("⚙️ Model Parameters")
+st.sidebar.markdown("Modify system inputs to trigger dynamic modeling calculations.")
 
 s_rain = st.sidebar.number_input("Average Rainfall (mm)", 200, 1200, 600)
 s_ph = st.sidebar.slider("Soil pH Level", 4.0, 9.5, 6.5, 0.1)
@@ -167,18 +167,18 @@ input_df = pd.DataFrame({
 
 pred = trained_models[s_model].predict(input_df)[0]
 cat = get_yield_category(pred, df)
-insights = get_actionable_insights(s_rain, s_ph, s_fert)
+alerts = generate_parameter_alerts(s_rain, s_ph, s_fert)
 
 # --- TAB 1: HOME ---
 with tab_home:
     col1, col2 = st.columns([1, 1], gap="large")
     with col1:
         st.write("")
-        st.markdown("### Welcome to the Future of Farming")
+        st.markdown("### Empirical Agricultural Analysis")
         st.markdown("""
-        HaveCrops Analytics uses high-dimensional historical data to empower farmers with precision yield forecasting. 
-        By analyzing rainfall patterns, soil chemistries, and regional crop performance, our models reduce agricultural 
-        uncertainty and maximize ROI.
+        HaveCrops Analytics utilizes historical multivariate datasets to generate yield estimates based on environmental regression models. 
+        By processing rainfall records, soil characteristic data, and local crop performance, the system provides 
+        statistical projections for resource planning.
         """)
         st.image("https://img.freepik.com/free-vector/modern-agriculture-concept_23-2148197711.jpg", use_container_width=True)
     
@@ -193,27 +193,27 @@ with tab_home:
 
 # --- TAB 2: PREDICTION ---
 with tab_predict:
-    st.markdown("### 🎯 Real-Time Yield Calculator")
+    st.markdown("### 🧮 Statistical Yield Predictor")
     
     p_col1, p_col2 = st.columns([1, 1], gap="medium")
     
     with p_col1:
         st.markdown(f"""
             <div class="predict-box">
-                <h2 style='color:#064e3b;'>Forecasted Yield</h2>
-                <h1 style='color:#059669; font-size:5rem; margin:0;'>{pred:.2f}</h1>
-                <p style='font-size:1.2rem; color:#64748b;'>Quintals per Hectare</p>
-                <hr style='border-color: rgba(16,185,129,0.1)'>
-                <div style='background:#f0fdf4; padding:15px; border-radius:15px; border: 1px solid #dcfce7;'>
-                    <strong style='color:#166534;'>PERFORMANCE:</strong> <span style='color:#10b981;'>{cat} Yield</span>
+                <h2 style='color:#1a1c1e;'>Estimated Yield</h2>
+                <h1 style='color:#d35400; font-size:5rem; margin:0;'>{pred:.2f}</h1>
+                <p style='font-size:1.2rem; color:#1a1c1e;'>Standard Q/ha</p>
+                <hr style='border-color: #1a1c1e'>
+                <div style='background:#e0e0e0; padding:15px; border-radius:0px; border: 1px solid #1a1c1e;'>
+                    <strong style='color:#1a1c1e;'>CLASSIFICATION:</strong> <span style='color:#d35400;'>{cat} Range</span>
                 </div>
             </div>
         """, unsafe_allow_html=True)
         
     with p_col2:
-        st.markdown("### 💡 Strategic Field Insights")
-        for insight in insights:
-            st.info(insight)
+        st.markdown("### 🛡️ Parameter Threshold Warnings")
+        for alert in alerts:
+            st.warning(alert)
         
         st.markdown("#### 🔍 Input Summary")
         st.json({
@@ -226,8 +226,8 @@ with tab_predict:
 
 # --- TAB 3: ANALYTICS (DYNAMIC) ---
 with tab_analytics:
-    st.markdown("### 📈 Live Analytics: Where your farm stands")
-    st.write("The red dot indicates your current simulated inputs relative to historical data.")
+    st.markdown("### 📉 Statistical Distribution & Current Estimate")
+    st.write("The red marker corresponds to the current selected parameters in the regression model.")
     
     v_col1, v_col2 = st.columns(2)
     

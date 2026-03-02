@@ -69,25 +69,25 @@ def get_yield_category(yield_value, df):
     else:
         return "High"
 
-def get_actionable_insights(rainfall, ph, fertilizer):
+def generate_parameter_alerts(rainfall, ph, fertilizer):
     """
-    Provides rule-based agricultural advice.
+    Evaluates input parameters against standard agronomic thresholds.
     """
-    insights = []
+    alerts = []
     
     if rainfall < 400:
-        insights.append("💧 **Water Stress**: Low rainfall detected. Consider drip irrigation systems.")
+        alerts.append("💧 **Threshold Warning**: Low precipitation detected (<400mm).")
     if ph < 5.5:
-        insights.append("🧪 **Acidity Alert**: Soil is too acidic. Adding agricultural lime is recommended.")
+        alerts.append("🧪 **PH Lower Bound**: Acidic soil conditions detected (<5.5).")
     elif ph > 7.5:
-        insights.append("🧪 **Alkalinity Alert**: Soil is alkaline. Consider adding sulfur or organic matter.")
+        alerts.append("🧪 **PH Upper Bound**: Alkaline soil conditions detected (>7.5).")
     if fertilizer < 50:
-        insights.append("🌱 **Nutrient Deficiency**: Low fertilizer usage. Conduct a soil test for N-P-K levels.")
+        alerts.append("🌱 **Resource Warning**: Sub-optimal fertilizer input volumes.")
         
-    if not insights:
-        insights.append("✅ **Balanced Conditions**: Environmental factors are stable for optimal growth.")
+    if not alerts:
+        alerts.append("✅ **Optimal Range**: Inputs remain within standard distribution thresholds.")
         
-    return insights
+    return alerts
 
 if __name__ == "__main__":
     generate_sample_data("data/sample_farm_data.csv")
