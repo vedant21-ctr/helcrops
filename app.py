@@ -145,6 +145,33 @@ tab_home, tab_predict, tab_analytics, tab_perf, tab_about = st.tabs([
 # --- TAB 1: HOME ---
 with tab_home:
     col1, col2 = st.columns([1, 1], gap="large")
+# --- SIDEBAR INPUTS (REACTIVE) ---
+st.sidebar.header("🚜 Field Conditions")
+st.sidebar.markdown("Adjust these values to see real-time updates across all analytics.")
+
+s_rain = st.sidebar.number_input("Average Rainfall (mm)", 200, 1200, 600)
+s_ph = st.sidebar.slider("Soil pH Level", 4.0, 9.5, 6.5, 0.1)
+s_fert = st.sidebar.number_input("Fertilizer Amount (kg/ha)", 0, 300, 120)
+s_soil = st.sidebar.selectbox("Soil Type", df['Soil_Type'].unique())
+s_crop = st.sidebar.selectbox("Crop Type", df['Crop_Type'].unique())
+s_model = st.sidebar.selectbox("Select ML Model", list(trained_models.keys()))
+
+# --- CORE PREDICTION LOGIC (RUNS EVERY RERENDER) ---
+input_df = pd.DataFrame({
+    'Rainfall': [s_rain],
+    'Soil_Type': [s_soil],
+    'Fertilizer_Used': [s_fert],
+    'Soil_pH': [s_ph],
+    'Crop_Type': [s_crop]
+})
+
+pred = trained_models[s_model].predict(input_df)[0]
+cat = get_yield_category(pred, df)
+insights = get_actionable_insights(s_rain, s_ph, s_fert)
+
+# --- TAB 1: HOME ---
+with tab_home:
+    col1, col2 = st.columns([1, 1], gap="large")
     with col1:
         st.write("")
         st.markdown("### Welcome to the Future of Farming")
@@ -152,13 +179,8 @@ with tab_home:
         SmartCrop AI uses high-dimensional historical data to empower farmers with precision yield forecasting. 
         By analyzing rainfall patterns, soil chemistries, and regional crop performance, our models reduce agricultural 
         uncertainty and maximize ROI.
-        
-        **Key Platform Capabilities:**
-        - **Precision Forecasting**: Sub-hectare level accuracy in yield estimation.
-        - **Decision Support**: Automated insights for soil correction and water management.
-        - **Comparative Analytics**: Visualizing crop-specific trends across diverse soil types.
         """)
-        st.image("https://img.freepik.com/free-vector/modern-agriculture-concept_23-2148197711.jpg?t=st=1740645000&exp=1740648600&hmac=3d2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b", use_container_width=True)
+        st.image("https://img.freepik.com/free-vector/modern-agriculture-concept_23-2148197711.jpg", use_container_width=True)
     
     with col2:
         st.markdown("### 📋 Dataset Overview")
@@ -168,86 +190,70 @@ with tab_home:
         
         st.write("#### 📝 Sample Data (First 10 Rows)")
         st.dataframe(df.head(10).style.background_gradient(cmap='Greens', subset=['Yield']))
-        
-        st.write("#### 🌍 Regional Crop Distribution")
-        fig, ax = plt.subplots(figsize=(8, 4))
-        df['Crop_Type'].value_counts().plot(kind='pie', autopct='%1.1f%%', colors=sns.color_palette('Greens_r'), ax=ax)
-        ax.set_ylabel("")
-        st.pyplot(fig)
 
 # --- TAB 2: PREDICTION ---
 with tab_predict:
-    st.markdown("### 🎯 Precision Yield Calculator")
-    st.write("Adjust the parameters in the sidebar to simulate crop conditions.")
+    st.markdown("### 🎯 Real-Time Yield Calculator")
     
-    # Sidebar remains for inputs but refined
-    st.sidebar.header("🚜 Field Conditions")
-    with st.sidebar.form("prediction_form"):
-        s_rain = st.number_input("Average Rainfall (mm)", 200, 1200, 600)
-        s_ph = st.slider("Soil pH Level", 4.0, 9.5, 6.5, 0.1)
-        s_fert = st.number_input("Fertilizer Amount (kg/ha)", 0, 300, 120)
-        s_soil = st.selectbox("Soil Type", df['Soil_Type'].unique())
-        s_crop = st.selectbox("Crop Type", df['Crop_Type'].unique())
-        s_model = st.selectbox("Select ML Model", list(trained_models.keys()))
-        s_submit = st.form_submit_button("💨 Run AI Prediction")
+    p_col1, p_col2 = st.columns([1, 1], gap="medium")
     
-    if s_submit:
-        input_df = pd.DataFrame({
-            'Rainfall': [s_rain],
-            'Soil_Type': [s_soil],
-            'Fertilizer_Used': [s_fert],
-            'Soil_pH': [s_ph],
-            'Crop_Type': [s_crop]
-        })
-        
-        pred = trained_models[s_model].predict(input_df)[0]
-        cat = get_yield_category(pred, df)
-        insights = get_actionable_insights(s_rain, s_ph, s_fert)
-        
-        p_col1, p_col2 = st.columns([1, 1], gap="medium")
-        
-        with p_col1:
-            st.markdown(f"""
-                <div class="predict-box">
-                    <h2 style='color:#1b5e20;'>Forecasted Yield</h2>
-                    <h1 style='color:#2e7d32; font-size:4rem;'>{pred:.2f}</h1>
-                    <p style='font-size:1.2rem; color:#666;'>Quintals per Hectare</p>
-                    <hr>
-                    <div style='background:#e8f5e9; padding:10px; border-radius:10px;'>
-                        <strong>Performance Category:</strong> {cat} Yield
-                    </div>
+    with p_col1:
+        st.markdown(f"""
+            <div class="predict-box">
+                <h2 style='color:#064e3b;'>Forecasted Yield</h2>
+                <h1 style='color:#059669; font-size:5rem; margin:0;'>{pred:.2f}</h1>
+                <p style='font-size:1.2rem; color:#64748b;'>Quintals per Hectare</p>
+                <hr style='border-color: rgba(16,185,129,0.1)'>
+                <div style='background:#f0fdf4; padding:15px; border-radius:15px; border: 1px solid #dcfce7;'>
+                    <strong style='color:#166534;'>PERFORMANCE:</strong> <span style='color:#10b981;'>{cat} Yield</span>
                 </div>
-            """, unsafe_allow_html=True)
-            
-        with p_col2:
-            st.markdown("### 💡 AI-Powered Insights")
-            for insight in insights:
-                st.info(insight)
-            
-            st.markdown("#### 🔍 Rule-Based Logic")
-            st.caption("Our intelligence engine flags conditions outside optimal ranges (pH 5.5-7.5, Rainfall >400mm) to suggest immediate corrective actions.")
+            </div>
+        """, unsafe_allow_html=True)
+        
+    with p_col2:
+        st.markdown("### 💡 AI-Powered Insights")
+        for insight in insights:
+            st.info(insight)
+        
+        st.markdown("#### 🔍 Input Summary")
+        st.json({
+            "Rainfall": s_rain,
+            "pH": s_ph,
+            "Fertilizer": s_fert,
+            "Soil": s_soil,
+            "Crop": s_crop
+        })
 
-# --- TAB 3: ANALYTICS ---
+# --- TAB 3: ANALYTICS (DYNAMIC) ---
 with tab_analytics:
-    st.markdown("### 📈 Deep Dive: Correlation & Distribution")
+    st.markdown("### 📈 Live Analytics: Where your farm stands")
+    st.write("The red dot indicates your current simulated inputs relative to historical data.")
     
     v_col1, v_col2 = st.columns(2)
     
     with v_col1:
-        st.write("#### 🌧 Yield vs Rainfall Correlation")
-        fig, ax = plt.subplots()
-        sns.scatterplot(data=df, x='Rainfall', y='Yield', hue='Crop_Type', palette='viridis', alpha=0.6, ax=ax)
+        st.write("#### 🌧 Yield vs Rainfall")
+        fig, ax = plt.subplots(figsize=(8, 5))
+        sns.scatterplot(data=df, x='Rainfall', y='Yield', hue='Crop_Type', palette='viridis', alpha=0.3, ax=ax)
+        # Dynamic marker for current input
+        ax.scatter(s_rain, pred, color='red', s=200, marker='*', label='Your Prediction', edgecolors='white', linewidth=2)
+        ax.legend()
         st.pyplot(fig)
         
     with v_col2:
         st.write("#### 🧪 pH Impact Analysis")
-        fig, ax = plt.subplots()
-        sns.regplot(data=df, x='Soil_pH', y='Yield', scatter_kws={'alpha':0.3}, line_kws={'color':'green'}, ax=ax)
+        fig, ax = plt.subplots(figsize=(8, 5))
+        sns.regplot(data=df, x='Soil_pH', y='Yield', scatter_kws={'alpha':0.2}, line_kws={'color':'#10b981'}, ax=ax)
+        # Dynamic marker
+        ax.scatter(s_ph, pred, color='red', s=200, marker='*', edgecolors='white', linewidth=2)
         st.pyplot(fig)
         
-    st.write("#### 🚜 Yield Distribution by Soil & Crop Type")
+    st.write("#### 🚜 Yield Distribution (Your Selection Highlighted)")
     fig, ax = plt.subplots(figsize=(10, 5))
+    # Filter for the selected crop/soil to show context
+    filtered_df = df[(df['Crop_Type'] == s_crop) | (df['Soil_Type'] == s_soil)]
     sns.boxplot(data=df, x='Soil_Type', y='Yield', hue='Crop_Type', palette='Greens', ax=ax)
+    plt.axhline(pred, color='red', linestyle='--', alpha=0.6, label='Predicted Yield')
     plt.xticks(rotation=45)
     st.pyplot(fig)
 
