@@ -132,7 +132,7 @@ trained_models, X_test, y_test = get_trained_models(df, numeric_features, catego
 # --- PAGE HEADER ---
 st.markdown("""
     <div class="header-container">
-        <div class="header-title">🌾 SmartCrop AI</div>
+        <div class="header-title">🌾 SmartCrop Analytics</div>
         <div class="header-subtitle">Advanced Crop Yield Analytics & Decision Support System</div>
     </div>
 """, unsafe_allow_html=True)
@@ -176,7 +176,7 @@ with tab_home:
         st.write("")
         st.markdown("### Welcome to the Future of Farming")
         st.markdown("""
-        SmartCrop AI uses high-dimensional historical data to empower farmers with precision yield forecasting. 
+        SmartCrop Analytics uses high-dimensional historical data to empower farmers with precision yield forecasting. 
         By analyzing rainfall patterns, soil chemistries, and regional crop performance, our models reduce agricultural 
         uncertainty and maximize ROI.
         """)
@@ -211,7 +211,7 @@ with tab_predict:
         """, unsafe_allow_html=True)
         
     with p_col2:
-        st.markdown("### 💡 AI-Powered Insights")
+        st.markdown("### 💡 Strategic Field Insights")
         for insight in insights:
             st.info(insight)
         
@@ -292,7 +292,7 @@ with tab_perf:
 with tab_about:
     st.markdown("### 📜 Final Project Submission")
     st.markdown("""
-    **Project Title:** SmartCrop AI Yield Prediction Platform  
+    **Project Title:** SmartCrop Yield Prediction Platform  
     **Academic Year:** 2024-25 (Mid-Semester Submission)  
     **Course:** Machine Learning in Agriculture  
     

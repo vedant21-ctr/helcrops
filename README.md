@@ -1,4 +1,4 @@
-# 🌾 SmartCrop AI: Crop Yield Prediction System
+# 🌾 SmartCrop Analytics: Crop Yield Prediction System
 ### *Advanced Machine Learning Pipeline for Precision Agriculture*
 
 ---
