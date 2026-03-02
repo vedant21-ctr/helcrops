@@ -22,6 +22,25 @@ st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Space+Grotesk:wght@300;500;700&display=swap');
 
+        /* Animations */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes softPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+        .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        .animate-pulse { animation: softPulse 2.5s ease-in-out infinite; }
+        [data-testid="stVerticalBlock"] > div { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        [data-testid="stVerticalBlock"] > div:hover { transform: translateY(-2px); }
+
         /* Global Styling */
         * { font-family: 'Space Grotesk', sans-serif; }
         code, .stMarkdown code { font-family: 'IBM Plex Mono', monospace !important; }
@@ -35,6 +54,7 @@ st.markdown("""
             color: #ffffff;
             text-align: left;
             margin-bottom: 2.5rem;
+            animation: fadeInUp 0.6s ease-out;
         }
         
         .header-title { 
@@ -60,6 +80,7 @@ st.markdown("""
             border: 1px solid #d1d1d1;
             border-radius: 2px;
             box-shadow: 4px 4px 0px 0px #1a1c1e;
+            animation: fadeInUp 0.5s ease-out;
         }
         
         /* Tab Styling */
@@ -102,7 +123,10 @@ st.markdown("""
             margin-top: 4rem;
             border-top: 2px solid #1a1c1e;
             background: #e0e0e0;
+            animation: fadeIn 0.5s ease-out;
         }
+        /* Grid consistency: equal column gaps */
+        [data-testid="column"] { min-width: 0; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -142,9 +166,6 @@ tab_home, tab_predict, tab_analytics, tab_perf, tab_about = st.tabs([
     "📁 Data Summary", "🧮 Yield Modeler", "📉 Data Visuals", "📋 Model Evaluation", "ℹ️ System Info"
 ])
 
-# --- TAB 1: HOME ---
-with tab_home:
-    col1, col2 = st.columns([1, 1], gap="large")
 # --- SIDEBAR INPUTS (REACTIVE) ---
 st.sidebar.header("⚙️ Model Parameters")
 st.sidebar.markdown("Modify system inputs to trigger dynamic modeling calculations.")
@@ -180,7 +201,17 @@ with tab_home:
         By processing rainfall records, soil characteristic data, and local crop performance, the system provides 
         statistical projections for resource planning.
         """)
-        st.image("https://img.freepik.com/free-vector/modern-agriculture-concept_23-2148197711.jpg", use_container_width=True)
+        # Agriculture / data analytics visual (replaces generic illustration)
+        st.markdown("""
+        <div class="animate-fade-in-up" style="
+            background: linear-gradient(135deg, #1a3d2e 0%, #2d5a45 50%, #1a1c1e 100%);
+            border-radius: 12px; padding: 2rem; border: 2px solid #d35400;
+            text-align: center; color: #fff; min-height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+            <div style="font-size: 4rem; margin-bottom: 0.5rem;">🌾📊</div>
+            <div style="font-size: 1.1rem; font-weight: 600; letter-spacing: 1px;">Yield × Environment × Soil</div>
+            <div style="font-size: 0.9rem; opacity: 0.9; margin-top: 0.5rem;">Data-driven projections for resource planning</div>
+        </div>
+        """, unsafe_allow_html=True)
     
     with col2:
         st.markdown("### 📋 Dataset Overview")
@@ -199,9 +230,9 @@ with tab_predict:
     
     with p_col1:
         st.markdown(f"""
-            <div class="predict-box">
+            <div class="predict-box animate-fade-in-up" style="animation-delay: 0.1s;">
                 <h2 style='color:#1a1c1e;'>Estimated Yield</h2>
-                <h1 style='color:#d35400; font-size:5rem; margin:0;'>{pred:.2f}</h1>
+                <h1 class="animate-pulse" style='color:#d35400; font-size:5rem; margin:0;'>{pred:.2f}</h1>
                 <p style='font-size:1.2rem; color:#1a1c1e;'>Standard Q/ha</p>
                 <hr style='border-color: #1a1c1e'>
                 <div style='background:#e0e0e0; padding:15px; border-radius:0px; border: 1px solid #1a1c1e;'>
