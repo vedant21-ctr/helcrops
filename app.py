@@ -11,7 +11,7 @@ from src.evaluation import compare_models
 
 # --- CONFIGURATION & STYLING ---
 st.set_page_config(
-    page_title="SmartCrop | Agri-Analytics Platform",
+    page_title="HaveCrops | Agri-Analytics Platform",
     page_icon="🌿",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -132,7 +132,7 @@ trained_models, X_test, y_test = get_trained_models(df, numeric_features, catego
 # --- PAGE HEADER ---
 st.markdown("""
     <div class="header-container">
-        <div class="header-title">🌾 SmartCrop Analytics</div>
+        <div class="header-title">🌿 HaveCrops Analytics</div>
         <div class="header-subtitle">Advanced Crop Yield Analytics & Decision Support System</div>
     </div>
 """, unsafe_allow_html=True)
@@ -176,7 +176,7 @@ with tab_home:
         st.write("")
         st.markdown("### Welcome to the Future of Farming")
         st.markdown("""
-        SmartCrop Analytics uses high-dimensional historical data to empower farmers with precision yield forecasting. 
+        HaveCrops Analytics uses high-dimensional historical data to empower farmers with precision yield forecasting. 
         By analyzing rainfall patterns, soil chemistries, and regional crop performance, our models reduce agricultural 
         uncertainty and maximize ROI.
         """)

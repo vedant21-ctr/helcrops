@@ -1,102 +1,70 @@
-# 🌾 SmartCrop Analytics: Crop Yield Prediction System
-### *Advanced Machine Learning Pipeline for Precision Agriculture*
+---
+title: 🌿 HaveCrops Analytics
+emoji: 🚜
+colorFrom: green
+colorTo: blue
+sdk: docker
+pinned: false
+---
+
+# Project: Crop Yield Prediction & Agentic Farming Advisor
+## From Predictive Analytics to Intelligent Intervention
+
+### Project Overview
+This project involves the design and implementation of a **Crop-driven agricultural analytics system** that predicts crop yield and evolves into an agentic farming advisor.
+
+- **Milestone 1:** Classical machine learning techniques applied to historical agricultural, soil, and weather data to predict yield and identify key drivers of productivity.
+- **Milestone 2:** Extension into an agent-based application that autonomously reasons about farm conditions, retrieves agronomic best practices (RAG), and plans intervention strategies.
 
 ---
 
-## 📖 Project Overview
-This project is a professional-grade **Mid-Semester Case Study** on predicting crop yields using high-dimensional historical agricultural data. The platform provides a comprehensive end-to-end Machine Learning pipeline that transforms raw environmental inputs into actionable harvesting forecasts.
-
-### **Core Problem Statement**
-Farmers often struggle with yield volatility due to complex interactions between soil chemistry, weather patterns, and crop varieties. This system aims to:
-1. **Reduce Uncertainty**: Provide statistical yield estimates.
-2. **Optimize Resources**: Suggest soil and water corrections based on inputs.
-3. **Compare Models**: Benchmark different ML architectures for accuracy.
+### Constraints & Requirements
+- **Team Size:** 3-4 Students
+- **API Budget:** Free Tier Only (Open-source models / Free APIs)
+- **Framework:** LangGraph (Recommended)
+- **Hosting:** Mandatory (Hugging Face Spaces, Streamlit Cloud, or Render)
 
 ---
 
-## 🏗 System Architecture
-The application follows a **Modular Monolith Architecture** to ensure maintainability and scalability.
-
-```mermaid
-graph TD
-    User([User Input via UI]) --> Logic[Streamlit Core]
-    Logic --> Data[Data Loader / Synthetic Gen]
-    Data --> Clean[Preprocessing Pipeline]
-    Clean --> Train[Model Suite: Linear Reg | Decision Tree]
-    Train --> Eval[Performance Benchmarking]
-    Eval --> Dashboard[Visual Analytics Dashboard]
-    Dashboard --> Insights[Actionable Agricultural Advice]
-```
-
-### **1. Data Preprocessing Pipeline**
-Using Scikit-learn's `ColumnTransformer`, the system implements:
-- **Numerical Features**: Median Imputation + Z-Score Standardization (StandardScaler).
-- **Categorical Features**: Most-Frequent Imputation + One-Hot Encoding (OHE) for high-dimensional feature mapping.
-
-### **2. Machine Learning Suite**
-- **Linear Regression**: A parametric approach to model linear relationship between rainfall/fertilizer and yield.
-- **Decision Tree Regressor**: A non-parametric model (CART) capable of capturing hierarchical and non-linear interactions between categorical soil types and environmental factors.
+### Technology Stack
+| Component | Technology |
+| :--- | :--- |
+| **ML Models (M1)** | Linear Regression, Decision Trees, Scikit-Learn |
+| **Agent Framework (M2)** | LangGraph, Chroma/FAISS (RAG) |
+| **UI Framework** | Streamlit or Gradio |
+| **LLMs (M2)** | Open-source models or Free-tier APIs |
 
 ---
 
-## 📊 Performance Benchmarking
-The system evaluates models using standard regression metrics:
-- **MAE (Mean Absolute Error)**: Average deviation of predictions.
-- **RMSE (Root Mean Squared Error)**: Critical for penalizing large forecast errors.
-- **R² Score**: Quantifying the variance explained by the model characteristics.
-- **MAPE**: Percentage error analysis for relative accuracy assessment.
+### Milestones & Deliverables
+
+#### Milestone 1: ML-Based Yield Prediction (Mid-Sem)
+**Objective:** Identify yield potential using historical farm data focus on classical ML pipelines *without LLMs*.
+
+**Key Deliverables:**
+- Problem understanding & Business context.
+- System architecture diagram.
+- Working local application with UI (Streamlit/Gradio).
+- Model performance evaluation report (MAE, RMSE, R2, etc.).
+
+#### Milestone 2: Agentic Farm Advisor (End-Sem)
+**Objective:** Extend the system into an agentic strategist that reasons about yield conditions and retrieves best practices to generate structured recommendations.
+
+**Key Deliverables:**
+- **Publicly deployed application** (Link required).
+- Agent workflow documentation (States & Nodes).
+- Structured recommendation report generation.
+- GitHub Repository & Complete Codebase.
+- Demo Video (Max 5 mins).
 
 ---
 
-## 🚀 Deployment & Installation
+### Evaluation Criteria
 
-### **Prerequisites**
-- Python 3.8+
-- Git
+| Phase | Weight | Criteria |
+| :--- | :--- | :--- |
+| **Mid-Sem** | 25% | ML technique application, Feature Engineering, UI Usability, Evaluation Metrics. |
+| **End-Sem** | 30% | Reasoning quality, RAG & State management implementation, Output clarity, Deployment success. |
 
-### **Installation Steps**
-1. **Clone the project**:
-   ```bash
-   git clone https://github.com/vedant21-ctr/helcrops.git
-   cd crop_yield_project
-   ```
-
-2. **Initialize Environment**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Launch Platform**:
-   ```bash
-   python3 -m streamlit run app.py
-   ```
-
----
-
-## 📂 Project Structure
-```text
-crop_yield_project/
-├── data/
-│   └── sample_farm_data.csv    # Dynamic dataset generation
-├── src/
-│   ├── preprocessing.py         # Sklearn feature engineering
-│   ├── model_training.py        # ML induction & feature importance
-│   ├── evaluation.py            # Comparative analytics logic
-│   └── utils.py                 # Rule-based inference & data scripts
-├── app.py                       # Modern multi-tab dashboard
-├── requirements.txt             # Academic dependency list
-└── README.md                    # Submission documentation
-```
-
----
-
-## 📜 Academic Submission Details
-- **Subject**: Machine Learning in Agriculture
-- **Submission Type**: Mid-Semester Project
-- **Version**: 2.0 (Professional Analytics Upgrade)
-- **Developer**: Vedant Satbhai
-
-> **Note**: This system is designed for demonstration purposes using synthetic logic that represents real-world agricultural trends.
-
----
-© 2024 | SmartCrop Agri-Analytics Platform
+> [!WARNING]
+> Localhost-only demonstrations will **not** be accepted for final submission. Project must be hosted.
