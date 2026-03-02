@@ -68,7 +68,7 @@ The system evaluates models using standard regression metrics:
 
 3. **Launch Platform**:
    ```bash
-   streamlit run app.py
+   python3 -m streamlit run app.py
    ```
 
 ---

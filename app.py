@@ -12,68 +12,96 @@ from src.evaluation import compare_models
 # --- CONFIGURATION & STYLING ---
 st.set_page_config(
     page_title="SmartCrop | Agri-Analytics Platform",
-    page_icon="🌾",
+    page_icon="🌿",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Professional Green-Gradient Theme
+# Premium Modern Agri-Theme
 st.markdown("""
     <style>
-        /* Global Background */
-        .main { background-color: #f0f4f0; }
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+
+        /* Global Styling */
+        * { font-family: 'Outfit', sans-serif; }
+        .main { background: linear-gradient(135deg, #f8faf8 0%, #edf2ed 100%); }
         
-        /* Header */
+        /* Glassmorphism Header */
         .header-container { 
-            background: linear-gradient(135deg, #1b5e20 0%, #4caf50 100%);
-            padding: 3rem;
-            border-radius: 0 0 2rem 2rem;
+            background: linear-gradient(135deg, #064e3b 0%, #059669 100%);
+            padding: 4rem 2rem;
+            border-radius: 0 0 3rem 3rem;
             color: white;
             text-align: center;
-            margin-bottom: 2rem;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            margin-bottom: 3rem;
+            box-shadow: 0 20px 40px rgba(5, 150, 105, 0.15);
+            position: relative;
+            overflow: hidden;
         }
-        .header-title { font-size: 3.5rem; font-weight: 800; margin-bottom: 0.5rem; }
-        .header-subtitle { font-size: 1.2rem; opacity: 0.9; }
+        .header-container::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         
-        /* Custom Cards */
+        .header-title { font-size: 4rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -1px; }
+        .header-subtitle { font-size: 1.4rem; opacity: 0.9; font-weight: 300; }
+        
+        /* Premium Cards */
         .stat-card {
-            background-color: white;
-            padding: 1.5rem;
-            border-radius: 1rem;
-            border-left: 5px solid #2e7d32;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 1rem;
-        }
-        
-        /* Tabs */
-        .stTabs [data-baseweb="tab-list"] { gap: 2rem; }
-        .stTabs [data-baseweb="tab"] {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #555;
-            padding-bottom: 10px;
-        }
-        .stTabs [aria-selected="true"] { color: #2e7d32 !important; border-bottom-color: #2e7d32 !important; }
-        
-        /* Prediction Result */
-        .predict-box {
-            background: #ffffff;
+            background: white;
             padding: 2rem;
             border-radius: 1.5rem;
-            border: 2px solid #e8f5e9;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(46, 125, 50, 0.1);
+            border-bottom: 4px solid #10b981;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
         }
+        .stat-card:hover { transform: translateY(-5px); }
+        
+        /* Tab Styling */
+        .stTabs [data-baseweb="tab-list"] { gap: 2.5rem; background-color: transparent; }
+        .stTabs [data-baseweb="tab"] {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #64748b;
+            padding: 10px 20px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        .stTabs [aria-selected="true"] { 
+            color: #059669 !important; 
+            background-color: #ecfdf5;
+            border-bottom-color: #059669 !important; 
+        }
+        
+        /* Prediction Result Box (Glassmorphic) */
+        .predict-box {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            padding: 3rem;
+            border-radius: 2rem;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(16, 185, 129, 0.15);
+            animation: fadeIn 0.8s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
         /* Footer */
         .footer {
             text-align: center;
-            padding: 2rem;
-            color: #666;
-            font-size: 0.9rem;
-            margin-top: 4rem;
-            border-top: 1px solid #ddd;
+            padding: 3rem;
+            color: #64748b;
+            font-size: 1rem;
+            margin-top: 5rem;
+            border-top: 1px solid #e2e8f0;
+            letter-spacing: 0.5px;
         }
     </style>
 """, unsafe_allow_html=True)
