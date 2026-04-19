@@ -552,7 +552,7 @@ else:
             )
         with m2:
             st.markdown(
-                f"""<div class="metric-card"><div class="metric-value" style="color:{tier_color} !important;">{cat}</div><div class="metric-label">Yield tier</div></div>""",
+                f"""<div class="metric-card"><div class="metric-value" style="color:{tier_color} !important;">{cat}</div><div class="metric-label">Risk level</div></div>""",
                 unsafe_allow_html=True,
             )
         with m3:
