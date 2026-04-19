@@ -86,9 +86,16 @@ To clone the deployment natively and test the code workflows:
 
 This platform aligns fully as an End-Semester submission for **Advanced Machine Learning in Agriculture**. 
 
-* **Authored By**: Vedant Satbhai  
 * **Track**: BTech CSE | AI & ML  
 * **Scale**: End-to-End ML Pipeline + LLM Agent Workflow Implementation.  
+
+### 👥 Team Members
+| Name | PRN | Role |
+| :--- | :--- | :--- |
+| **Vedant Satbhai** | `2401010500` | Team Leader |
+| **Pratik Agade** | `2401010346` | Report Maker & UI Checker |
+| **Raghvendra Singh** | `2401010367` | Research Analytics & UI/UX |
+
 
 Evaluation parameters heavily target System Contextual Routing, Vector Retrieval Stability, Interface Precision, and Deployment Operations UX constraints mapped extensively throughout this repository.
 
