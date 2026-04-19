@@ -7,188 +7,381 @@ import os
 import time
 import plotly.express as px
 import plotly.graph_objects as go
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
 from src.utils import generate_sample_data, get_yield_category, generate_parameter_alerts
 from src.preprocessing import get_preprocessing_pipeline, prepare_data
 from src.model_training import train_models, get_feature_importance
-from src.evaluation import compare_models
+from src.evaluation import compare_models, evaluate_model
 from agent.graph import build_graph
 from utils.pdf_generator import create_pdf
+
+# --- Project presentation (edit for your submission) ---
+PROJECT_AUTHOR = "Vedant Satbhai"
+ACADEMIC_YEAR = "2025–26"
 
 # --- CONFIGURATION & STYLING ---
 st.set_page_config(
     page_title="HaveCrops Analytics | AI Dashboard",
     page_icon="🌱",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
 )
 
-# Bespoke Premium Theme & Animations
-st.markdown("""
+# Light, premium SaaS theme + motion (primary UI is LIGHT — not dark)
+st.markdown(
+    """
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 
-        /* CSS Variables */
         :root {
-            --primary: #00C853; 
+            --primary: #00C853;
             --secondary: #2979FF;
             --accent: #7C4DFF;
-            --bg: #0e1117;
-            --card-bg: #1e1e24;
-            --text-main: #F8FAFC;
-            --text-mut: #A0AEC0;
+            --bg: #F8F9FA;
+            --surface: #FFFFFF;
+            --border: #E0E0E0;
+            --text: #1A1A1A;
+            --muted: #5C6370;
+            --shadow: rgba(15, 23, 42, 0.06);
+            --shadow-hover: rgba(15, 23, 42, 0.12);
         }
 
-        * { font-family: 'Inter', sans-serif; color: var(--text-main); }
-        h1, h2, h3, h4, h5, .hero-title { font-family: 'Space Grotesk', sans-serif !important; color: var(--text-main) !important; }
-        
-        .main { background-color: var(--bg); }
-        
-        /* Layout Adjustments */
-        div[data-testid="stSidebar"] { display: none; }
-        .dashboard-mode div[data-testid="stSidebar"] { display: flex !important; }
+        .stApp, [data-testid="stAppViewContainer"], .main {
+            background-color: var(--bg) !important;
+            color: var(--text) !important;
+        }
+        section.main > div { padding-top: 1.25rem; }
 
-        /* Animations */
-        @keyframes fade-in-up {
-            0% { opacity: 0; transform: translateY(20px); }
-            100% { opacity: 1; transform: translateY(0); }
+        * { font-family: 'Inter', sans-serif !important; }
+        h1, h2, h3, h4, h5, .hero-title, .space-font {
+            font-family: 'Space Grotesk', sans-serif !important;
+            color: var(--text) !important;
         }
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
+        p, span, label, .stMarkdown { color: var(--muted); }
+
+        div[data-testid="stSidebar"] {
+            background-color: var(--surface) !important;
+            border-right: 1px solid var(--border) !important;
         }
-        @keyframes typing {
-            from { width: 0 }
-            to { width: 100% }
+        div[data-testid="stSidebar"] * { color: var(--text) !important; }
+
+        /* Page enter */
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes float-soft {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
         }
         @keyframes blink-caret {
-            from, to { border-color: transparent }
+            from, to { border-color: transparent; }
             50% { border-color: var(--primary); }
         }
-        @keyframes bg-gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        @keyframes underline-grow {
+            from { transform: scaleX(0); }
+            to { transform: scaleX(1); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes ripple {
+            to { transform: scale(4); opacity: 0; }
         }
 
-        .animate-up { animation: fade-in-up 0.8s ease-out forwards; }
-        
-        /* Landing Page Hero */
-        .hero-section {
-            background: linear-gradient(-45deg, #00C853, #2979FF, #7C4DFF);
-            background-size: 400% 400%;
-            animation: bg-gradient 15s ease infinite;
-            padding: 8rem 2rem;
-            border-radius: 24px;
+        .page-fade { animation: fade-in 0.7s ease-out both; }
+        .section-up { animation: slide-up 0.65s ease-out both; }
+        .delay-1 { animation-delay: 0.08s; }
+        .delay-2 { animation-delay: 0.16s; }
+        .delay-3 { animation-delay: 0.24s; }
+
+        /* Hero — soft light gradient */
+        .hero-soft {
+            background: linear-gradient(135deg, #E8F5E9 0%, #E3F2FD 45%, #F3E5F5 100%);
+            padding: 4.5rem 2rem 4rem;
+            border-radius: 20px;
             text-align: center;
-            color: white;
-            box-shadow: 0 20px 40px rgba(41, 121, 255, 0.2);
-            margin-bottom: 4rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 12px 40px var(--shadow);
+            margin-bottom: 2.5rem;
             position: relative;
             overflow: hidden;
         }
-        .hero-title {
-            font-size: 4.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            letter-spacing: -2px;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        .hero-soft::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 20% 20%, rgba(0,200,83,0.08), transparent 45%),
+                        radial-gradient(circle at 80% 80%, rgba(124,77,255,0.07), transparent 40%);
+            pointer-events: none;
         }
-        .typewriter h3 {
+        .hero-title {
+            font-size: clamp(2.2rem, 4vw, 3.25rem);
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            color: var(--text) !important;
+            letter-spacing: -0.03em;
+            position: relative;
+            z-index: 1;
+        }
+        .typewriter-wrap {
+            display: inline-block;
+            max-width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+        .typewriter-wrap h3 {
+            display: inline-block;
             overflow: hidden;
-            border-right: .15em solid white;
             white-space: nowrap;
+            border-right: 3px solid var(--primary);
             margin: 0 auto;
-            letter-spacing: .15em;
-            animation: typing 3.5s steps(40, end), blink-caret .75s step-end infinite;
-            font-size: 1.5rem;
-            font-weight: 400;
-            opacity: 0.9;
+            font-size: clamp(1rem, 2vw, 1.35rem);
+            font-weight: 500;
+            color: var(--muted) !important;
+            max-width: 0;
+            animation: typing-line 3.4s steps(52, end) 0.2s forwards, blink-caret 0.75s step-end infinite;
+        }
+        @keyframes typing-line {
+            from { max-width: 0; }
+            to { max-width: min(100%, 52rem); }
         }
 
-        /* Hover Cards */
+        /* Feature cards */
         .feature-card {
-            background: var(--card-bg);
-            padding: 2rem;
+            background: var(--surface);
+            padding: 1.75rem 1.5rem;
             border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 24px var(--shadow);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s ease;
             height: 100%;
         }
         .feature-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(41, 121, 255, 0.1);
-            border-color: var(--secondary);
+            transform: translateY(-6px);
+            box-shadow: 0 16px 36px var(--shadow-hover);
+            border-color: rgba(41, 121, 255, 0.35);
         }
-        .feature-icon { font-size: 2.5rem; margin-bottom: 1rem; display: inline-block; animation: float 6s ease-in-out infinite; }
+        .feature-icon { font-size: 2.25rem; margin-bottom: 0.75rem; animation: float-soft 5s ease-in-out infinite; }
+        .feature-card h4 { color: var(--text) !important; margin: 0 0 0.5rem 0; font-size: 1.1rem; }
 
-        /* Report Dashboard UI */
-        .report-header {
-            padding: 2rem;
-            background: var(--card-bg);
+        /* Report */
+        .report-hero {
+            background: var(--surface);
+            padding: 1.75rem 2rem;
             border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            margin-bottom: 2rem;
-            border-left: 6px solid var(--primary);
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 28px var(--shadow);
+            margin-bottom: 1.5rem;
         }
-        
+        .report-hero h1 { margin: 0; font-size: 1.75rem; color: var(--text) !important; }
+        .report-hero .sub { margin: 0.35rem 0 0 0; color: var(--muted) !important; font-size: 0.95rem; }
+        .title-line {
+            height: 4px;
+            width: 120px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            border-radius: 4px;
+            margin-top: 1rem;
+            transform-origin: left;
+            animation: underline-grow 0.9s ease-out 0.2s both;
+        }
+
         .metric-card {
-            background: var(--card-bg);
-            padding: 1.5rem;
-            border-radius: 16px;
+            background: var(--surface);
+            padding: 1.25rem 1rem;
+            border-radius: 14px;
             text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.05);
-            transition: all 0.3s ease;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 16px var(--shadow);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
         }
-        .metric-card:hover { transform: scale(1.02); box-shadow: 0 8px 25px rgba(0, 200, 83, 0.15); border-color: var(--primary); }
-        .metric-value { font-size: 2.5rem; font-weight: 700; color: var(--text-main); font-family: 'Space Grotesk', sans-serif; }
-        .metric-label { font-size: 1rem; color: var(--text-mut); text-transform: uppercase; letter-spacing: 1px; }
+        .metric-card:hover { transform: translateY(-4px); box-shadow: 0 10px 28px var(--shadow-hover); }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Space Grotesk', sans-serif !important;
+            color: var(--text) !important;
+            line-height: 1.2;
+        }
+        .metric-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted) !important; margin-top: 0.35rem; }
 
-        /* Timeline styling */
+        .insight-card {
+            background: linear-gradient(135deg, #F1F8E9 0%, #E8F5E9 100%);
+            border: 1px solid #C8E6C9;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin: 0.75rem 0;
+            color: var(--text) !important;
+        }
+        .disclaimer-box {
+            background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
+            border: 1px solid #FDBA74;
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-top: 1rem;
+            color: #9A3412 !important;
+        }
+
+        /* Timeline */
         .timeline-step {
             display: flex;
             align-items: flex-start;
-            margin-bottom: 2rem;
-            padding: 1.5rem;
-            background: var(--card-bg);
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 1.1rem 1.25rem;
+            background: var(--surface);
             border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            border-left: 4px solid var(--accent);
-            animation: fade-in-up 0.5s ease backwards;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 14px var(--shadow);
+            animation: slide-up 0.5s ease backwards;
         }
-        .timeline-icon { font-size: 1.5rem; margin-right: 1.5rem; background: var(--bg); height: 50px; width: 50px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
-        
-        /* Agent Pipeline Visual */
-        .pipeline-container { display: flex; justify-content: space-between; align-items: center; margin: 3rem 0; padding: 2rem; background: var(--card-bg); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .pipeline-node { text-align: center; position: relative; z-index: 2; }
-        .pipeline-circle { width: 60px; height: 60px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border: 3px solid #334155; transition: all 0.5s ease; margin: 0 auto 10px; }
-        .pipeline-node.active .pipeline-circle { border-color: var(--primary); background: rgba(0, 200, 83, 0.1); box-shadow: 0 0 20px rgba(0, 200, 83, 0.3); transform: scale(1.1); }
-        .pipeline-line { flex-grow: 1; height: 4px; background: #E2E8F0; margin: 0 15px; position: relative; top: -15px; z-index: 1; transition: all 0.5s ease; }
-        .pipeline-line.active { background: var(--primary); }
+        .timeline-icon {
+            font-size: 1.35rem;
+            min-width: 44px; height: 44px;
+            display: flex; align-items: center; justify-content: center;
+            background: #E8F5E9;
+            border-radius: 50%;
+            border: 1px solid #C8E6C9;
+        }
 
-        /* General UI Polish */
-        .stButton button { width: 100%; border-radius: 8px !important; padding: 0.8rem !important; transition: all 0.3s ease !important; font-weight: 600 !important; }
-        .stButton button:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(41, 121, 255, 0.2); }
-        .stTabs [data-baseweb="tab-list"] { gap: 2rem; border-bottom: 2px solid #E2E8F0; }
-        .stTabs [data-baseweb="tab"] { font-size: 1.1rem; padding: 1rem 0; border-radius: 0; }
-        .stTabs [aria-selected="true"] { color: var(--primary) !important; border-bottom: 3px solid var(--primary) !important; }
+        /* Pipeline — light */
+        .pipeline-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 1.5rem 0;
+            padding: 1.25rem 1rem;
+            background: var(--surface);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 8px 24px var(--shadow);
+        }
+        .pipeline-node { text-align: center; flex: 1; min-width: 72px; position: relative; z-index: 2; }
+        .pipeline-node .lbl { font-size: 0.78rem; color: var(--muted) !important; margin-top: 0.35rem; }
+        .pipeline-circle {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            background: #F1F5F9;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.35rem;
+            margin: 0 auto;
+            border: 2px solid var(--border);
+            transition: all 0.45s ease;
+        }
+        .pipeline-node.active .pipeline-circle {
+            border-color: var(--primary);
+            background: rgba(0, 200, 83, 0.12);
+            box-shadow: 0 0 0 4px rgba(0, 200, 83, 0.15);
+        }
+        .pipeline-line {
+            flex: 1;
+            height: 3px;
+            background: #E2E8F0;
+            min-width: 20px;
+            align-self: center;
+            margin-bottom: 1.5rem;
+            border-radius: 2px;
+            transition: background 0.45s ease;
+        }
+        .pipeline-line.active { background: linear-gradient(90deg, var(--primary), var(--secondary)); }
 
-        /* Standard Footer */
-        .final-footer { text-align: center; padding: 3rem 1rem; margin-top: 5rem; border-top: 1px solid #E2E8F0; color: var(--text-mut); font-size: 0.9rem; }
-        .final-footer a { color: var(--secondary); text-decoration: none; font-weight: 600; }
+        /* Buttons: ripple + glow */
+        .stButton > button {
+            border-radius: 10px !important;
+            font-weight: 600 !important;
+            transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+            position: relative;
+            overflow: hidden;
+        }
+        .stButton > button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(41, 121, 255, 0.2) !important;
+        }
+        div[data-testid="stTabs"] { margin-top: 0.5rem; }
+        .stTabs [data-baseweb="tab-list"] { gap: 1rem; background: transparent; border-bottom: 1px solid var(--border); }
+        .stTabs [data-baseweb="tab"] { color: var(--muted) !important; }
+        .stTabs [aria-selected="true"] {
+            color: var(--primary) !important;
+            border-bottom-color: var(--primary) !important;
+        }
+
+        /* Shimmer placeholder */
+        .shimmer-bar {
+            height: 10px;
+            border-radius: 6px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.2s linear infinite;
+        }
+
+        .final-footer {
+            text-align: center;
+            padding: 2.5rem 1rem 2rem;
+            margin-top: 3rem;
+            border-top: 1px solid var(--border);
+            color: var(--muted) !important;
+            font-size: 0.9rem;
+            background: linear-gradient(180deg, transparent, rgba(0,0,0,0.02));
+        }
+        .final-footer .foot-line {
+            height: 3px;
+            width: 100px;
+            margin: 14px auto 0;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+            animation: fade-in 1s ease both;
+        }
     </style>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True,
+)
 
-# --- SESSION STATE INITIALIZATION ---
-if 'started' not in st.session_state:
+PLOTLY_FONT = dict(family="Inter, sans-serif", color="#1A1A1A", size=12)
+PLOTLY_PAPER = "#FFFFFF"
+PLOTLY_PLOT = "#F8F9FA"
+
+
+def plotly_light_layout(fig, height=360):
+    fig.update_layout(
+        height=height,
+        paper_bgcolor=PLOTLY_PAPER,
+        plot_bgcolor=PLOTLY_PLOT,
+        font=PLOTLY_FONT,
+        margin=dict(l=24, r=24, t=48, b=24),
+    )
+    return fig
+
+
+def risk_meter_value(yield_tier: str) -> float:
+    """Map yield tier to a 0–100 'pressure' scale (lower yield tier → higher number)."""
+    return {"Low": 78, "Medium": 46, "High": 18}.get(yield_tier, 45)
+
+
+def confidence_from_model(pipeline, X_test, y_test) -> int:
+    m = evaluate_model(pipeline, X_test, y_test)
+    if not m or "R2 Score" not in m:
+        return 85
+    r2 = float(m["R2 Score"])
+    return max(0, min(100, int(round(r2 * 100))))
+
+
+# --- SESSION STATE ---
+if "started" not in st.session_state:
     st.session_state.started = False
+if "dashboard_hint" not in st.session_state:
+    st.session_state.dashboard_hint = None
 
-# --- DATA INITIALIZATION ---
+
 @st.cache_data
 def load_and_prep_data():
     data_path = "data/sample_farm_data.csv"
@@ -198,6 +391,7 @@ def load_and_prep_data():
     df = pd.read_csv(data_path)
     return df
 
+
 @st.cache_resource
 def get_trained_models(_df, num_feat, cat_feat):
     X_train, X_test, y_train, y_test = prepare_data(_df)
@@ -205,322 +399,527 @@ def get_trained_models(_df, num_feat, cat_feat):
     models = train_models(preprocessor, X_train, y_train)
     return models, X_test, y_test
 
+
 df = load_and_prep_data()
-numeric_features = ['Rainfall', 'Fertilizer_Used', 'Soil_pH']
-categorical_features = ['Soil_Type', 'Crop_Type']
+numeric_features = ["Rainfall", "Fertilizer_Used", "Soil_pH"]
+categorical_features = ["Soil_Type", "Crop_Type"]
 trained_models, X_test, y_test = get_trained_models(df, numeric_features, categorical_features)
 
 # ==============================================================================
-# LANDING PAGE VIEW
+# HOME / LANDING
 # ==============================================================================
 if not st.session_state.started:
-    st.markdown("""
-        <div class="hero-section animate-up">
+    st.markdown('<div class="page-fade">', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="hero-soft section-up">
             <h1 class="hero-title">HaveCrops Analytics</h1>
-            <div class="typewriter">
-                <h3>AI-Powered Crop Intelligence & Farm Advisory System</h3>
+            <div class="typewriter-wrap">
+                <h3>AI-Powered Crop Intelligence & Agentic Farming Advisor</h3>
             </div>
         </div>
-    """, unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("🚀 Enter Dashboard", type="primary", use_container_width=True):
+        """,
+        unsafe_allow_html=True,
+    )
+
+    c1, c2, c3 = st.columns([1, 1, 1])
+    with c1:
+        if st.button("Start Analysis", type="primary", use_container_width=True, key="btn_start"):
             st.session_state.started = True
+            st.session_state.dashboard_hint = "report"
+            st.rerun()
+    with c3:
+        if st.button("Explore Dashboard", use_container_width=True, key="btn_explore"):
+            st.session_state.started = True
+            st.session_state.dashboard_hint = "explore"
             st.rerun()
 
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    
-    # Feature Cards
+    st.markdown("<br/>", unsafe_allow_html=True)
+
     fc1, fc2, fc3, fc4 = st.columns(4)
-    with fc1:
-        st.markdown("""<div class="feature-card animate-up" style="animation-delay: 0.1s">
-            <div class="feature-icon">🌾</div>
-            <h4>Yield Prediction</h4>
-            <p style="color: var(--text-mut);">Robust ML regression models trained on extensive datasets.</p>
-        </div>""", unsafe_allow_html=True)
-    with fc2:
-        st.markdown("""<div class="feature-card animate-up" style="animation-delay: 0.2s">
-            <div class="feature-icon">🤖</div>
-            <h4>AI Advisor</h4>
-            <p style="color: var(--text-mut);">Llama 3 powered autonomous agronomy consulting agent.</p>
-        </div>""", unsafe_allow_html=True)
-    with fc3:
-        st.markdown("""<div class="feature-card animate-up" style="animation-delay: 0.3s">
-            <div class="feature-icon">📊</div>
-            <h4>Data Insights</h4>
-            <p style="color: var(--text-mut);">Dynamic exploratory visualization and variable correlation.</p>
-        </div>""", unsafe_allow_html=True)
-    with fc4:
-        st.markdown("""<div class="feature-card animate-up" style="animation-delay: 0.4s">
-            <div class="feature-icon">📄</div>
-            <h4>Smart Reports</h4>
-            <p style="color: var(--text-mut);">Exportable interactive PDF documents and structured UI timelines.</p>
-        </div>""", unsafe_allow_html=True)
-        
-    st.markdown("<br><br><h2 style='text-align: center;' class='animate-up'>How It Works</h2><br>", unsafe_allow_html=True)
-    
-    # Flow UI
-    st.markdown("""
-        <div class="pipeline-container animate-up" style="animation-delay: 0.5s">
-            <div class="pipeline-node active"><div class="pipeline-circle">📥</div><div>Input</div></div>
+    cards = [
+        ("🌾", "Yield Prediction", "Classical ML regressors with preprocessing and validation."),
+        ("🤖", "AI Advisor", "LangGraph agent with RAG and Groq (Llama 3.3)."),
+        ("📊", "Data Insights", "Distributions, correlations, and scenario overlays."),
+        ("📄", "Smart Reports", "Interactive advisory view and exportable PDF."),
+    ]
+    cols = [fc1, fc2, fc3, fc4]
+    for i, col in enumerate(cols):
+        icon, title, desc = cards[i]
+        with col:
+            st.markdown(
+                f"""
+                <div class="feature-card section-up delay-{i+1}">
+                    <div class="feature-icon">{icon}</div>
+                    <h4>{title}</h4>
+                    <p style="margin:0;font-size:0.9rem;color:#5C6370;">{desc}</p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    st.markdown(
+        "<br/><h2 class='space-font' style='text-align:center;margin-bottom:0.5rem;'>How it works</h2>"
+        "<p style='text-align:center;color:#5C6370;'>Input → ML → RAG → LLM → Report</p>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        """
+        <div class="pipeline-container section-up">
+            <div class="pipeline-node active"><div class="pipeline-circle">📥</div><div class="lbl">Input</div></div>
             <div class="pipeline-line active"></div>
-            <div class="pipeline-node active"><div class="pipeline-circle">🧮</div><div>ML Core</div></div>
+            <div class="pipeline-node active"><div class="pipeline-circle">🧮</div><div class="lbl">ML</div></div>
             <div class="pipeline-line active"></div>
-            <div class="pipeline-node active"><div class="pipeline-circle">📚</div><div>RAG</div></div>
+            <div class="pipeline-node active"><div class="pipeline-circle">📚</div><div class="lbl">RAG</div></div>
             <div class="pipeline-line active"></div>
-            <div class="pipeline-node active"><div class="pipeline-circle">🧠</div><div>LLM Agent</div></div>
+            <div class="pipeline-node active"><div class="pipeline-circle">🧠</div><div class="lbl">LLM</div></div>
             <div class="pipeline-line active"></div>
-            <div class="pipeline-node active"><div class="pipeline-circle">📊</div><div>Report</div></div>
+            <div class="pipeline-node active"><div class="pipeline-circle">📄</div><div class="lbl">Report</div></div>
         </div>
-    """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # ==============================================================================
-# MAIN DASHBOARD VIEW
+# DASHBOARD
 # ==============================================================================
 else:
-    # Activate Sidebar explicitly in CSS
-    st.markdown("<script>document.body.classList.add('dashboard-mode');</script>", unsafe_allow_html=True)
-    
-    st.sidebar.markdown("""
-        <h2 style='color: var(--primary); font-family: "Space Grotesk";'>⚙️ Parameters</h2>
-    """, unsafe_allow_html=True)
-    
+    st.markdown('<div class="page-fade">', unsafe_allow_html=True)
+    hint = st.session_state.pop("dashboard_hint", None)
+    if hint == "explore":
+        st.info("Welcome — use the tabs to explore **Yield Predictor**, **Analytics**, and **Model Evaluation**.")
+    elif hint == "report":
+        st.success("You’re in the dashboard — open **AI Advisory Report** to generate your agent report.")
+
+    st.sidebar.markdown(
+        f"<h3 style='color:#00C853;margin-top:0;' class='space-font'>Parameters</h3>",
+        unsafe_allow_html=True,
+    )
+
     s_rain = st.sidebar.number_input("Average Rainfall (mm)", 200, 1200, 600)
     s_ph = st.sidebar.slider("Soil pH Level", 4.0, 9.5, 6.5, 0.1)
     s_fert = st.sidebar.number_input("Fertilizer Amount (kg/ha)", 0, 300, 120)
-    s_soil = st.sidebar.selectbox("Soil Type", df['Soil_Type'].unique())
-    s_crop = st.sidebar.selectbox("Crop Type", df['Crop_Type'].unique())
+    s_soil = st.sidebar.selectbox("Soil Type", df["Soil_Type"].unique())
+    s_crop = st.sidebar.selectbox("Crop Type", df["Crop_Type"].unique())
     s_model = st.sidebar.selectbox("Select ML Model", list(trained_models.keys()))
 
-    if st.sidebar.button("🏠 View Home Page"):
+    if st.sidebar.button("Home", use_container_width=True):
         st.session_state.started = False
         st.rerun()
 
-    input_df = pd.DataFrame({
-        'Rainfall': [s_rain], 'Soil_Type': [s_soil], 'Fertilizer_Used': [s_fert],
-        'Soil_pH': [s_ph], 'Crop_Type': [s_crop]
-    })
-    
+    input_df = pd.DataFrame(
+        {
+            "Rainfall": [s_rain],
+            "Soil_Type": [s_soil],
+            "Fertilizer_Used": [s_fert],
+            "Soil_pH": [s_ph],
+            "Crop_Type": [s_crop],
+        }
+    )
+
     pred = trained_models[s_model].predict(input_df)[0]
     cat = get_yield_category(pred, df)
     alerts = generate_parameter_alerts(s_rain, s_ph, s_fert)
+    conf_pct = confidence_from_model(trained_models[s_model], X_test, y_test)
+    report_date = datetime.now().strftime("%B %d, %Y")
+    risk_val = risk_meter_value(cat)
 
-    # Tabs
-    tab_report, tab_predict, tab_analytics, tab_perf, tab_data = st.tabs([
-        "🤖 AI Advisory Report", "🧮 Yield Predictor", "📉 Analytics", "📋 Model Evaluation", "📁 Data Source"
-    ])
+    tier_color = "#00C853" if cat == "High" else "#FFB300" if cat == "Medium" else "#D32F2F"
 
-    # --- TAB 1: AI ADVISORY REPORT (PREMIUM EXPERIENCE) ---
+    tab_report, tab_predict, tab_analytics, tab_perf, tab_data = st.tabs(
+        ["AI Advisory Report", "Yield Predictor", "Analytics", "Model Evaluation", "Data Source"]
+    )
+
+    # --- TAB 1: AI ADVISORY REPORT ---
     with tab_report:
-        st.markdown("""
-            <div class="report-header animate-up">
-                <h1 style='margin:0; color: var(--text-main);'>Smart AI Advisory Report</h1>
-                <p style='margin:5px 0 0 0; color: var(--text-mut); font-weight: 500;'>
-                    Real-time Agronomic Analysis for <b>{crop}</b> • Generated Today
-                </p>
+        st.markdown(
+            f"""
+            <div class="report-hero section-up">
+                <h1>AI Advisory Report</h1>
+                <p class="sub"><b>{s_crop}</b> · {report_date}</p>
+                <div class="title-line"></div>
             </div>
-        """.format(crop=s_crop), unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True,
+        )
 
-        # Top Metric Cards
-        col1, col2, col3, col4 = st.columns(4)
-        with col1: st.markdown(f"<div class='metric-card animate-up' style='animation-delay: 0.1s'><div class='metric-value'>{pred:.1f}</div><div class='metric-label'>Est. Q/ha</div></div>", unsafe_allow_html=True)
-        with col2: st.markdown(f"<div class='metric-card animate-up' style='animation-delay: 0.2s'><div class='metric-value' style='color:{'#ffb300' if cat=='Medium' else '#00C853' if cat=='High' else '#d50000'};'>{cat}</div><div class='metric-label'>Risk Level</div></div>", unsafe_allow_html=True)
-        with col3: st.markdown(f"<div class='metric-card animate-up' style='animation-delay: 0.3s'><div class='metric-value'>94%</div><div class='metric-label'>Model Confidence</div></div>", unsafe_allow_html=True)
-        with col4: st.markdown(f"<div class='metric-card animate-up' style='animation-delay: 0.4s'><div class='metric-value'>{s_soil}</div><div class='metric-label'>Current Soil</div></div>", unsafe_allow_html=True)
+        m1, m2, m3, m4 = st.columns(4)
+        with m1:
+            st.markdown(
+                f"""<div class="metric-card"><div class="metric-value">{pred:.1f}</div><div class="metric-label">Yield (q/ha)</div></div>""",
+                unsafe_allow_html=True,
+            )
+        with m2:
+            st.markdown(
+                f"""<div class="metric-card"><div class="metric-value" style="color:{tier_color} !important;">{cat}</div><div class="metric-label">Yield tier</div></div>""",
+                unsafe_allow_html=True,
+            )
+        with m3:
+            st.markdown(
+                f"""<div class="metric-card"><div class="metric-value">{conf_pct}%</div><div class="metric-label">Confidence (R²)</div></div>""",
+                unsafe_allow_html=True,
+            )
+        with m4:
+            st.markdown(
+                f"""<div class="metric-card"><div class="metric-value" style="font-size:1.25rem;">{s_crop}</div><div class="metric-label">Crop type</div></div>""",
+                unsafe_allow_html=True,
+            )
 
-        st.markdown("<br>", unsafe_allow_html=True)
-        
-        # Interactive Charts Section using Plotly
-        st.markdown("### 📊 Interactive Yield Profile", unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
-        
-        with c1:
-            # Yield Gauge
-            fig_gauge = go.Figure(go.Indicator(
-                mode = "gauge+number",
-                value = pred,
-                domain = {'x': [0, 1], 'y': [0, 1]},
-                title = {'text': "Yield Projection (Q/ha)", 'font': {'size': 20}},
-                gauge = {
-                    'axis': {'range': [None, df['Yield'].max() + 10], 'tickwidth': 1, 'tickcolor': "white"},
-                    'bar': {'color': "#00C853"},
-                    'bgcolor': "rgba(0,0,0,0)",
-                    'steps': [
-                        {'range': [0, df['Yield'].quantile(0.33)], 'color': "rgba(255, 69, 58, 0.2)"},
-                        {'range': [df['Yield'].quantile(0.33), df['Yield'].quantile(0.66)], 'color': "rgba(255, 214, 10, 0.2)"},
-                        {'range': [df['Yield'].quantile(0.66), df['Yield'].max() + 10], 'color': "rgba(48, 209, 88, 0.2)"}
-                    ]
-                }
-            ))
-            fig_gauge.update_layout(height=350, margin=dict(l=20, r=20, t=50, b=20), paper_bgcolor="rgba(0,0,0,0)")
+        st.markdown("#### Visual analytics", unsafe_allow_html=True)
+        row1_c1, row1_c2 = st.columns(2)
+        with row1_c1:
+            fig_gauge = go.Figure(
+                go.Indicator(
+                    mode="gauge+number",
+                    value=float(pred),
+                    number={"suffix": " q/ha", "font": {"size": 28}},
+                    title={"text": "Yield gauge", "font": {"size": 14, "color": "#1A1A1A"}},
+                    gauge={
+                        "axis": {"range": [0, float(df["Yield"].max()) + 10], "tickcolor": "#94A3B8"},
+                        "bar": {"color": "#00C853"},
+                        "bgcolor": "#FFFFFF",
+                        "steps": [
+                            {"range": [0, float(df["Yield"].quantile(0.33))], "color": "#FFEBEE"},
+                            {
+                                "range": [
+                                    float(df["Yield"].quantile(0.33)),
+                                    float(df["Yield"].quantile(0.66)),
+                                ],
+                                "color": "#FFF8E1",
+                            },
+                            {
+                                "range": [float(df["Yield"].quantile(0.66)), float(df["Yield"].max()) + 10],
+                                "color": "#E8F5E9",
+                            },
+                        ],
+                    },
+                )
+            )
+            plotly_light_layout(fig_gauge, height=340)
             st.plotly_chart(fig_gauge, use_container_width=True)
 
-        with c2:
-            # Radar chart for optimal features compared to average
-            avg_rain = df['Rainfall'].mean()
-            avg_ph = df['Soil_pH'].mean()
-            avg_fert = df['Fertilizer_Used'].mean()
-            
-            fig_radar = go.Figure()
-            fig_radar.add_trace(go.Scatterpolar(
-                r=[s_rain/1200, s_ph/9.5, s_fert/300],
-                theta=['Rainfall', 'Soil pH', 'Fertilizer'],
-                fill='toself',
-                name='Current Input',
-                marker=dict(color='#2979FF')
-            ))
-            fig_radar.add_trace(go.Scatterpolar(
-                r=[avg_rain/1200, avg_ph/9.5, avg_fert/300],
-                theta=['Rainfall', 'Soil pH', 'Fertilizer'],
-                fill='toself',
-                name='Dataset Avg',
-                marker=dict(color='#00C853')
-            ))
-            fig_radar.update_layout(
-                polar=dict(radialaxis=dict(visible=False, range=[0, 1])),
-                showlegend=True, height=350, margin=dict(l=40, r=40, t=50, b=20),
-                paper_bgcolor="rgba(0,0,0,0)"
+        with row1_c2:
+            fig_risk = go.Figure(
+                go.Indicator(
+                    mode="gauge+number",
+                    value=risk_val,
+                    number={"suffix": " / 100", "font": {"size": 26}},
+                    title={"text": "Agronomic pressure (tier-based)", "font": {"size": 14, "color": "#1A1A1A"}},
+                    gauge={
+                        "axis": {"range": [0, 100]},
+                        "bar": {"color": "#FF9800"},
+                        "steps": [
+                            {"range": [0, 35], "color": "#E8F5E9"},
+                            {"range": [35, 65], "color": "#FFF8E1"},
+                            {"range": [65, 100], "color": "#FFEBEE"},
+                        ],
+                    },
+                )
             )
+            plotly_light_layout(fig_risk, height=340)
+            st.plotly_chart(fig_risk, use_container_width=True)
+
+        row2_c1, row2_c2 = st.columns(2)
+        with row2_c1:
+            fi_df = None
+            if "Decision Tree" in trained_models:
+                fi_df = get_feature_importance(
+                    trained_models["Decision Tree"], numeric_features, categorical_features
+                )
+            if fi_df is not None and len(fi_df) > 0:
+                fig_fi = px.bar(
+                    fi_df.head(12),
+                    x="Importance",
+                    y="Feature",
+                    orientation="h",
+                    color="Importance",
+                    color_continuous_scale=["#E3F2FD", "#2979FF"],
+                )
+                fig_fi.update_yaxes(categoryorder="total ascending")
+                plotly_light_layout(fig_fi, height=360)
+                st.plotly_chart(fig_fi, use_container_width=True)
+            else:
+                st.caption("Feature importance appears when the Decision Tree model is available.")
+
+        with row2_c2:
+            avg_rain = df["Rainfall"].mean()
+            avg_ph = df["Soil_pH"].mean()
+            avg_fert = df["Fertilizer_Used"].mean()
+            fig_radar = go.Figure()
+            fig_radar.add_trace(
+                go.Scatterpolar(
+                    r=[s_rain / 1200, s_ph / 9.5, s_fert / 300],
+                    theta=["Rainfall", "Soil pH", "Fertilizer"],
+                    fill="toself",
+                    name="Your input",
+                    line_color="#2979FF",
+                    fillcolor="rgba(41,121,255,0.25)",
+                )
+            )
+            fig_radar.add_trace(
+                go.Scatterpolar(
+                    r=[avg_rain / 1200, avg_ph / 9.5, avg_fert / 300],
+                    theta=["Rainfall", "Soil pH", "Fertilizer"],
+                    fill="toself",
+                    name="Dataset average",
+                    line_color="#00C853",
+                    fillcolor="rgba(0,200,83,0.2)",
+                )
+            )
+            fig_radar.update_layout(
+                polar=dict(radialaxis=dict(visible=True, range=[0, 1], gridcolor="#E0E0E0")),
+                showlegend=True,
+                legend=dict(orientation="h", yanchor="bottom", y=-0.2),
+            )
+            plotly_light_layout(fig_radar, height=360)
             st.plotly_chart(fig_radar, use_container_width=True)
 
-        st.markdown("<hr style='border-color: #E2E8F0; margin: 3rem 0;'>", unsafe_allow_html=True)
-        
-        st.markdown("### 🤖 Agentic Plan Generator", unsafe_allow_html=True)
-        
-        # M2 Requirement: Accept advisory queries
-        advisory_query = st.text_input("Optional Custom Query for AI Advisor (e.g., 'How to fix pH level?')", placeholder="Leave blank for a general high-yield strategy...")
+        st.markdown("---")
+        st.markdown("### Agentic advisory", unsafe_allow_html=True)
+        advisory_query = st.text_input(
+            "Optional focus for the advisor",
+            placeholder="e.g. How can I improve soil pH sustainably?",
+        )
         final_query = advisory_query if advisory_query else "Give precise numbered action steps to maximize yield."
-        
-        if st.button("✨ Generate AI Advisory Report", type="primary"):
+
+        gen = st.button("Generate AI Advisory Report", type="primary", key="gen_report")
+
+        if gen:
             if not os.environ.get("GROQ_API_KEY"):
-                st.error("GROQ_API_KEY not found in environment!")
+                st.error("Set **GROQ_API_KEY** in your environment or `.env` file.")
             else:
-                # Pipeline UI
                 progress_container = st.empty()
-                progress_container.markdown("""
-                    <div class="pipeline-container animate-up">
-                        <div class="pipeline-node active"><div class="pipeline-circle">📥</div><div>Input</div></div>
+                progress_container.markdown(
+                    """
+                    <div class="pipeline-container">
+                        <div class="pipeline-node active"><div class="pipeline-circle">📥</div><div class="lbl">Input</div></div>
                         <div class="pipeline-line"></div>
-                        <div class="pipeline-node"><div class="pipeline-circle">🧮</div><div>ML Core</div></div>
+                        <div class="pipeline-node"><div class="pipeline-circle">🧮</div><div class="lbl">ML</div></div>
                         <div class="pipeline-line"></div>
-                        <div class="pipeline-node"><div class="pipeline-circle">📚</div><div>RAG</div></div>
+                        <div class="pipeline-node"><div class="pipeline-circle">📚</div><div class="lbl">RAG</div></div>
                         <div class="pipeline-line"></div>
-                        <div class="pipeline-node"><div class="pipeline-circle">🧠</div><div>LLM Agent</div></div>
+                        <div class="pipeline-node"><div class="pipeline-circle">🧠</div><div class="lbl">LLM</div></div>
                         <div class="pipeline-line"></div>
-                        <div class="pipeline-node"><div class="pipeline-circle">📊</div><div>Report</div></div>
+                        <div class="pipeline-node"><div class="pipeline-circle">📄</div><div class="lbl">Report</div></div>
                     </div>
-                """, unsafe_allow_html=True)
-                
-                time.sleep(1)
-                progress_container.markdown("""<div class="pipeline-container animate-up">
-                    <div class="pipeline-node active"><div class="pipeline-circle">📥</div><div>Input</div></div><div class="pipeline-line active"></div>
-                    <div class="pipeline-node active"><div class="pipeline-circle">🧮</div><div>ML Core</div></div><div class="pipeline-line active"></div>
-                    <div class="pipeline-node active"><div class="pipeline-circle">📚</div><div>RAG</div></div><div class="pipeline-line"></div>
-                    <div class="pipeline-node"><div class="pipeline-circle">🧠</div><div>LLM Agent</div></div><div class="pipeline-line"></div>
-                    <div class="pipeline-node"><div class="pipeline-circle">📊</div><div>Report</div></div></div>""", unsafe_allow_html=True)
-                
+                    """,
+                    unsafe_allow_html=True,
+                )
+                time.sleep(0.6)
+                progress_container.markdown(
+                    """
+                    <div class="pipeline-container">
+                        <div class="pipeline-node active"><div class="pipeline-circle">📥</div><div class="lbl">Input</div></div>
+                        <div class="pipeline-line active"></div>
+                        <div class="pipeline-node active"><div class="pipeline-circle">🧮</div><div class="lbl">ML</div></div>
+                        <div class="pipeline-line active"></div>
+                        <div class="pipeline-node active"><div class="pipeline-circle">📚</div><div class="lbl">RAG</div></div>
+                        <div class="pipeline-line"></div>
+                        <div class="pipeline-node"><div class="pipeline-circle">🧠</div><div class="lbl">LLM</div></div>
+                        <div class="pipeline-line"></div>
+                        <div class="pipeline-node"><div class="pipeline-circle">📄</div><div class="lbl">Report</div></div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
                 try:
                     graph = build_graph()
-                    res = graph.invoke({
-                        "crop_data": { "crop": s_crop, "soil": s_soil, "rainfall": s_rain, "temperature": 25, "ph": s_ph, "fertilizer": s_fert },
-                        "prediction": pred,
-                        "risk_level": cat,
-                        "query": final_query
-                    })
-                    
-                    time.sleep(1)
-                    progress_container.markdown("""<div class="pipeline-container animate-up">
-                        <div class="pipeline-node active"><div class="pipeline-circle">📥</div><div>Input</div></div><div class="pipeline-line active"></div>
-                        <div class="pipeline-node active"><div class="pipeline-circle">🧮</div><div>ML Core</div></div><div class="pipeline-line active"></div>
-                        <div class="pipeline-node active"><div class="pipeline-circle">📚</div><div>RAG</div></div><div class="pipeline-line active"></div>
-                        <div class="pipeline-node active"><div class="pipeline-circle">🧠</div><div>LLM Agent</div></div><div class="pipeline-line active"></div>
-                        <div class="pipeline-node active"><div class="pipeline-circle">📊</div><div>Report Complete</div></div></div>""", unsafe_allow_html=True)
-                    
-                    st.toast('Report Generated Successfully!', icon='🔥')
-                    
-                    # Simulated UI Timeline Parse
-                    st.markdown("### 📋 Structured Action Timeline")
-                    # Break the generated report into steps simply by newlines for UI purposes (a simple heuristic)
-                    lines = [ln for ln in res['report'].split('\n') if len(ln.strip()) > 10 and not ln.startswith('#')]
-                    
-                    for i, step in enumerate(lines[:4]): # Show first 4 good points as timeline
-                        icon = "💧" if "water" in step.lower() or "rain" in step.lower() else "🧪" if "soil" in step.lower() or "ph" in step.lower() else "🌱"
-                        st.markdown(f"""
-                            <div class="timeline-step" style="animation-delay: {i*0.1}s">
+                    res = graph.invoke(
+                        {
+                            "crop_data": {
+                                "crop": s_crop,
+                                "soil": s_soil,
+                                "rainfall": s_rain,
+                                "temperature": 25,
+                                "ph": s_ph,
+                                "fertilizer": s_fert,
+                            },
+                            "prediction": pred,
+                            "risk_level": cat,
+                            "query": final_query,
+                        }
+                    )
+
+                    time.sleep(0.5)
+                    progress_container.markdown(
+                        """
+                        <div class="pipeline-container">
+                            <div class="pipeline-node active"><div class="pipeline-circle">📥</div><div class="lbl">Input</div></div>
+                            <div class="pipeline-line active"></div>
+                            <div class="pipeline-node active"><div class="pipeline-circle">🧮</div><div class="lbl">ML</div></div>
+                            <div class="pipeline-line active"></div>
+                            <div class="pipeline-node active"><div class="pipeline-circle">📚</div><div class="lbl">RAG</div></div>
+                            <div class="pipeline-line active"></div>
+                            <div class="pipeline-node active"><div class="pipeline-circle">🧠</div><div class="lbl">LLM</div></div>
+                            <div class="pipeline-line active"></div>
+                            <div class="pipeline-node active"><div class="pipeline-circle">📄</div><div class="lbl">Report</div></div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                    st.toast("Report generated successfully.", icon="✅")
+
+                    st.markdown("#### Action plan", unsafe_allow_html=True)
+                    lines = [
+                        ln
+                        for ln in res["report"].split("\n")
+                        if len(ln.strip()) > 10 and not ln.strip().startswith("#")
+                    ]
+                    labels = ["Soil & inputs", "Irrigation & water", "Nutrition & timing", "Monitoring"]
+                    for i, step in enumerate(lines[:4]):
+                        icon = "🧪" if "soil" in step.lower() or "ph" in step.lower() else "💧" if "water" in step.lower() or "irrig" in step.lower() else "🌱"
+                        lab = labels[i] if i < len(labels) else f"Step {i+1}"
+                        st.markdown(
+                            f"""
+                            <div class="timeline-step" style="animation-delay:{i*0.07}s">
                                 <div class="timeline-icon">{icon}</div>
                                 <div>
-                                    <h4 style="margin:0 0 5px 0;">Strategy Phase {i+1}</h4>
-                                    <p style="margin:0; color: var(--text-mut);">{step}</p>
+                                    <div style="font-weight:600;color:#1A1A1A;margin:0 0 4px 0;">{lab}</div>
+                                    <div style="margin:0;color:#5C6370;font-size:0.92rem;">{step}</div>
                                 </div>
                             </div>
-                        """, unsafe_allow_html=True)
+                            """,
+                            unsafe_allow_html=True,
+                        )
 
-                    st.markdown("### 🔍 Full Agent Insights (RAG Context)")
-                    st.info("💡 **Core AI Takeaway**: Optimal yields require balanced interventions. The recommendations below are synthesized dynamically from historic benchmarks and best agronomic guidelines.")
-                    
-                    with st.expander("📚 Expand to View Full RAG-Indexed Document Sources & Complete Report", expanded=False):
-                        st.markdown(f"<div style='background: var(--card-bg); padding: 15px; border-radius: 8px; border-left: 3px solid var(--secondary);'>{res['report']}</div>", unsafe_allow_html=True)
-                    
-                    st.markdown("---")
-                    st.warning("⚠️ **Disclaimer:** This report is generated by an autonomous AI agent for educational and preliminary advisory purposes. Always evaluate extensive farm interventions with certified soil testing laboratories and local agronomists.")
+                    st.markdown("#### AI insights", unsafe_allow_html=True)
+                    st.markdown(
+                        """
+                        <div class="insight-card">
+                            <strong>Key takeaway</strong><br/>
+                            Recommendations combine your scenario, model context, and retrieved agronomy notes. Prioritize
+                            measurable checks (soil tests, water balance) before large input changes.
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
 
+                    with st.expander("Sources & full report text", expanded=False):
+                        st.markdown(
+                            f"<div style='background:#FAFAFA;padding:14px;border-radius:10px;border:1px solid #E0E0E0;'>{res['report']}</div>",
+                            unsafe_allow_html=True,
+                        )
 
-                    report_pdf_path = create_pdf(res["report"], s_crop)
-                    with open(report_pdf_path, "rb") as pdf_file:
-                        st.download_button("📥 Export Premium PDF Report", pdf_file, file_name=f"HaveCrops_Report_{s_crop}.pdf", type="primary")
-                        
+                    st.markdown(
+                        """
+                        <div class="disclaimer-box">
+                            ⚠️ <strong>Disclaimer:</strong> Educational / preliminary guidance only. Confirm interventions with
+                            local agronomists and certified testing where required.
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                    pdf_path = create_pdf(res["report"], s_crop, datetime.now().strftime("%B %d, %Y at %H:%M"))
+                    with open(pdf_path, "rb") as pdf_file:
+                        st.download_button(
+                            "Download PDF report",
+                            pdf_file,
+                            file_name=f"HaveCrops_Report_{s_crop.replace(' ', '_')}.pdf",
+                            type="primary",
+                        )
                 except Exception as e:
-                    st.error(f"Agent Execution Failed: {str(e)}")
+                    st.error(f"Agent execution failed: {str(e)}")
 
-    # --- OTHER TABS (Simplified implementations of existing features) ---
+    # --- TAB 2: PREDICTOR ---
     with tab_predict:
-        st.markdown("### 🧮 Model Specific Yield Estimates")
-        for alert in alerts: st.warning(alert)
-        st.json({"Rainfall": s_rain, "pH": s_ph, "Fertilizer": s_fert, "Soil": s_soil, "Crop": s_crop})
-        
+        st.markdown("### Yield predictor", unsafe_allow_html=True)
+        st.markdown(
+            f"<div class='metric-card' style='max-width:420px;'><div class='metric-value'>{pred:.2f}</div>"
+            f"<div class='metric-label'>Predicted yield ({s_model})</div></div>",
+            unsafe_allow_html=True,
+        )
+        st.markdown("<br/>", unsafe_allow_html=True)
+        for alert in alerts:
+            st.warning(alert)
+        with st.expander("Current scenario (JSON)", expanded=False):
+            st.json(
+                {
+                    "Rainfall": s_rain,
+                    "pH": s_ph,
+                    "Fertilizer": s_fert,
+                    "Soil": s_soil,
+                    "Crop": s_crop,
+                }
+            )
+
+    # --- TAB 3: ANALYTICS ---
     with tab_analytics:
-        st.markdown("### 📉 Statistical Distribution")
+        st.markdown("### Analytics", unsafe_allow_html=True)
+        sns.set_theme(style="whitegrid", palette="pastel")
         v_col1, v_col2 = st.columns(2)
         with v_col1:
             fig, ax = plt.subplots(figsize=(8, 5))
-            sns.scatterplot(data=df, x='Rainfall', y='Yield', hue='Crop_Type', palette='viridis', alpha=0.3, ax=ax)
-            ax.scatter(s_rain, pred, color='red', s=200, marker='*', edgecolors='white', linewidth=2)
+            fig.patch.set_facecolor("#FFFFFF")
+            ax.set_facecolor("#F8F9FA")
+            sns.scatterplot(data=df, x="Rainfall", y="Yield", hue="Crop_Type", alpha=0.35, ax=ax, legend="brief")
+            ax.scatter(s_rain, pred, color="#D32F2F", s=180, marker="*", edgecolors="#FFFFFF", linewidths=1.5, zorder=5, label="Your point")
+            ax.set_title("Rainfall vs yield", color="#1A1A1A")
+            ax.legend(frameon=True, fancybox=True, framealpha=0.9)
+            plt.tight_layout()
             st.pyplot(fig)
+            plt.close(fig)
         with v_col2:
             fig, ax = plt.subplots(figsize=(8, 5))
-            sns.regplot(data=df, x='Soil_pH', y='Yield', scatter_kws={'alpha':0.2}, line_kws={'color':'#10b981'}, ax=ax)
-            ax.scatter(s_ph, pred, color='red', s=200, marker='*', edgecolors='white', linewidth=2)
+            fig.patch.set_facecolor("#FFFFFF")
+            ax.set_facecolor("#F8F9FA")
+            sns.regplot(data=df, x="Soil_pH", y="Yield", scatter_kws={"alpha": 0.2}, line_kws={"color": "#00C853"}, ax=ax)
+            ax.scatter(s_ph, pred, color="#D32F2F", s=180, marker="*", edgecolors="#FFFFFF", linewidths=1.5, zorder=5)
+            ax.set_title("Soil pH vs yield", color="#1A1A1A")
+            plt.tight_layout()
             st.pyplot(fig)
+            plt.close(fig)
 
+    # --- TAB 4: EVALUATION ---
     with tab_perf:
-        st.markdown("### 🛠 Model Benchmarking")
+        st.markdown("### Model evaluation", unsafe_allow_html=True)
         perf_df = compare_models(trained_models, X_test, y_test)
-        st.table(perf_df)
-        
-        st.markdown("### 🔑 Feature Importance Analysis")
-        # Try to get feature importance from Decision Tree (which is one of our models)
-        if 'Decision Tree' in trained_models:
-            fi_df = get_feature_importance(trained_models['Decision Tree'], numeric_features, categorical_features)
+        st.dataframe(perf_df, use_container_width=True)
+        st.markdown("### Feature importance (Decision Tree)", unsafe_allow_html=True)
+        if "Decision Tree" in trained_models:
+            fi_df = get_feature_importance(
+                trained_models["Decision Tree"], numeric_features, categorical_features
+            )
             if fi_df is not None:
-                fig_fi = px.bar(fi_df, x='Importance', y='Feature', orientation='h', title='Decision Tree Feature Importance', color='Importance', color_continuous_scale='viridis')
-                fig_fi.update_layout(yaxis={'categoryorder':'total ascending'}, height=400, paper_bgcolor="rgba(0,0,0,0)")
+                fig_fi = px.bar(
+                    fi_df,
+                    x="Importance",
+                    y="Feature",
+                    orientation="h",
+                    color="Importance",
+                    color_continuous_scale=["#E8EAF6", "#7C4DFF"],
+                )
+                fig_fi.update_yaxes(categoryorder="total ascending")
+                plotly_light_layout(fig_fi, height=420)
                 st.plotly_chart(fig_fi, use_container_width=True)
             else:
                 st.info("Feature importance could not be extracted.")
-        
-    with tab_data:
-        st.markdown("### 📁 Underlying Knowledge Source")
-        m_col1, m_col2 = st.columns(2)
-        m_col1.metric("Total Records", f"{len(df)}", "Rows")
-        m_col2.metric("Mean Yield", f"{df['Yield'].mean():.2f}", "Q/ha")
-        st.dataframe(df.head(15))
+        else:
+            st.caption("Train Decision Tree to enable importance charts.")
 
-# --- UNIVERSAL NEW FOOTER ---
-st.markdown("""
-    <div class="final-footer animate-up" style="animation-delay: 0.8s">
-        <h4 style="color: var(--text-main); margin-bottom: 5px;">End-Sem AI Project Submission – HaveCrops Analytics</h4>
-        <p>Developed by <a href="#" target="_blank">Vedant Satbhai</a> • Senior Year 2024-25</p>
-        <div style="height: 3px; background: linear-gradient(90deg, #00C853, #2979FF, #7C4DFF); width: 80px; margin: 15px auto; border-radius: 2px;"></div>
+    # --- TAB 5: DATA ---
+    with tab_data:
+        st.markdown("### Data source", unsafe_allow_html=True)
+        m_col1, m_col2 = st.columns(2)
+        m_col1.metric("Records", f"{len(df)}")
+        m_col2.metric("Mean yield", f"{df['Yield'].mean():.2f}", "q/ha")
+        st.dataframe(df.head(20), use_container_width=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# --- FOOTER ---
+st.markdown(
+    f"""
+    <div class="final-footer page-fade">
+        <div class="space-font" style="font-size:1rem;color:#1A1A1A !important;margin-bottom:6px;">
+            End-Sem AI Project Submission – HaveCrops Analytics
+        </div>
+        <div style="color:#5C6370;">{PROJECT_AUTHOR} · {ACADEMIC_YEAR}</div>
+        <div class="foot-line"></div>
     </div>
-""", unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True,
+)
