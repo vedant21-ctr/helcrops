@@ -7,9 +7,12 @@ streamlit>=1.30.0
 scipy
 altair<5
 reportlab
+plotly
+python-dotenv
 langchain-huggingface
 huggingface_hub
 langchain-community
+langchain-groq
 langgraph
 sentence-transformers
 faiss-cpu
