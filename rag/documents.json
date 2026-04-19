@@ -1,0 +1,22 @@
+[
+    {
+        "content": "For wheat, optimal soil pH is between 6.0 and 7.0. It requires moderate rainfall (30-90cm). Excessive nitrogen fertilizer can cause lodging, leading to crop loss.",
+        "metadata": {"topic": "wheat", "category": "best_practices"}
+    },
+    {
+        "content": "Rice requires heavy irrigation, often thriving in standing water. The ideal pH is 5.5 to 6.5. High temperatures (20-35°C) and high humidity are necessary for optimal growth.",
+        "metadata": {"topic": "rice", "category": "irrigation"}
+    },
+    {
+        "content": "Soil pH management is critical. To increase pH (reduce acidity), apply agricultural lime. To lower pH (increase acidity), add elemental sulfur or aluminum sulfate.",
+        "metadata": {"topic": "general", "category": "soil_health"}
+    },
+    {
+        "content": "Fertilizer optimization: Apply nitrogen in split doses rather than all at once to prevent leaching and improve uptake efficiency. Use precision farming tools to assess local soil nutrient deficiencies.",
+        "metadata": {"topic": "general", "category": "fertilizer"}
+    },
+    {
+        "content": "Corn yields peak with well-drained loamy soils and warm weather. It is highly responsive to nitrogen but susceptible to drought stress during the silking stage.",
+        "metadata": {"topic": "corn", "category": "best_practices"}
+    }
+]

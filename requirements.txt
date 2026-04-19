@@ -6,3 +6,11 @@ seaborn
 streamlit>=1.30.0
 scipy
 altair<5
+reportlab
+langchain-huggingface
+huggingface_hub
+langchain-community
+langgraph
+sentence-transformers
+faiss-cpu
+langchain
