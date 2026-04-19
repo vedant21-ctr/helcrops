@@ -269,8 +269,9 @@ def plotly_dark_layout(fig, height=380):
     fig.update_yaxes(showgrid=True, gridwidth=1, gridcolor='#1E293B', zerolinecolor='#334155')
     return fig
 
-def risk_meter_value(yield_tier: str) -> float:
-    return {"Low": 85, "Medium": 50, "High": 15}.get(yield_tier, 45)
+def risk_meter_value(pred: float, max_yield: float) -> float:
+    risk = 100 - (pred / max_yield * 100)
+    return round(max(0.0, min(100.0, float(risk))), 1)
 
 def confidence_from_model(pipeline, X_test, y_test) -> int:
     m = evaluate_model(pipeline, X_test, y_test)
@@ -404,7 +405,7 @@ with tab_report:
     with c_mini1:
         fig_r = go.Figure(go.Indicator(
             mode = "gauge+number",
-            value = risk_meter_value(cat),
+            value = risk_meter_value(pred, df["Yield"].max()),
             title = {'text': "Agronomic Risk Index", 'font': {'color': '#FFFFFF'}},
             number = {'suffix': "%", 'font': {'color': '#3B82F6'}},
             gauge = {
